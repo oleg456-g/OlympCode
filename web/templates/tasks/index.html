@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Задачи — OlympCode{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Задачи</h1>
+  <p>Тренируйся по темам — от простого к сложному</p>
+</div>
+
+{% if topics_data %}
+<div class="topics-grid">
+  {% for item in topics_data %}
+    
+    {# Вычисляем всё в начале итерации цикла #}
+    {% set percent = (item.solved / item.total * 100)|int if item.total > 0 else 0 %}
+    {% set text_color = "hsl(" ~ (percent * 1.2)|int ~ ", 85%, 42%)" %} {# 42% чуть темнее для лучшей контрастности #}
+
+  <a href="/topic/{{ item.topic.slug }}" 
+     class="topic-card" 
+     {% if user %} style="--theme-color: {{ text_color }};" {% endif %}>
+     
+    <div class="topic-card__title">{{ item.topic.title }}</div>
+    <div class="topic-card__meta">
+      <span>{{ item.total }} задач</span>
+      {% if user %}
+      <span style="color: var(--theme-color); font-weight: 500;">✓ {{ item.solved }} решено ({{ percent }}%)</span>
+      {% endif %}
+    </div>
+    
+    {% if user and item.total > 0 %}
+    <div class="topic-card__progress">
+      <div class="topic-card__progress-fill" style="width: {{ percent }}%"></div>
+    </div>
+    {% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center; padding: 60px; color: var(--text-2)">
+  <p style="font-size:17px; margin-bottom:8px">Задачи ещё не загружены</p>
+  <p style="font-size:13px">Убедись, что папка <code>parsing/</code> находится рядом с папкой <code>web/</code></p>
+</div>
+{% endif %}
+
+{% endblock %}

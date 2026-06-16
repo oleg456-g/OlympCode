@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}{{ contest.title }} — Админка{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/admin/">Админка</a>
+  <span>›</span>
+  <span>{{ contest.title }}</span>
+</div>
+
+<div class="page-header">
+  <h1>{{ contest.title }}</h1>
+  <p>{{ contest.year or '' }} · <a href="/contests/{{ contest.id }}">Смотреть на сайте →</a></p>
+</div>
+
+{% if request.query_params.get('ok') %}
+<div style="background:var(--green-dim); border:1px solid var(--green); border-radius:var(--radius); padding:10px 16px; margin-bottom:20px; color:var(--green); font-size:14px">
+  ✓ Задача «{{ request.query_params.get('ok') }}» успешно загружена
+</div>
+{% endif %}
+
+{% if request.query_params.get('error') %}
+<div style="background:var(--red-dim); border:1px solid var(--red); border-radius:var(--radius); padding:10px 16px; margin-bottom:20px; color:var(--red); font-size:14px">
+  ✗ Ошибка: {{ request.query_params.get('error') }}
+</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start">
+
+  <!-- Загрузка задачи -->
+  <div class="card">
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Загрузить задачу (Polygon ZIP)</h2>
+    <form method="post" action="/admin/contest/{{ contest.id }}/upload"
+          enctype="multipart/form-data">
+
+      <div class="form-group">
+        <label>ZIP-архив задачи</label>
+        <input class="form-input" type="file" name="file" accept=".zip" required style="padding:6px">
+      </div>
+
+      <div class="form-group">
+        <label>Название задачи</label>
+        <input class="form-input" name="task_name" required
+               placeholder="Очередь в столовую">
+        <div style="font-size:11px; color:var(--text-3); margin-top:4px">
+          Если в архиве есть problem.xml с именем — оно приоритетнее
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:80px 1fr; gap:12px">
+        <div class="form-group">
+          <label>Буква</label>
+          <input class="form-input" name="letter" required placeholder="A" maxlength="2"
+                 style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label>Тип проверки</label>
+          <select class="lang-select" name="scoring_type" style="width:100%; padding:9px 12px">
+            <option value="icpc">ICPC (AC/WA)</option>
+            <option value="ioi_sum">IOI — сумма за тесты</option>
+            <option value="ioi_groups">IOI — по подзадачам</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="btn btn--primary" type="submit" style="width:100%">Загрузить →</button>
+    </form>
+  </div>
+
+  <!-- Текущие задачи -->
+  <div class="card">
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">
+      Задачи ({{ contest_tasks | length }})
+    </h2>
+    {% if contest_tasks %}
+    <ul class="task-list">
+      {% for ct in contest_tasks %}
+      <li class="task-list__item">
+        <span class="task-num" style="font-size:16px; font-weight:700; color:var(--blue)">
+          {{ ct.letter }}
+        </span>
+        <div>
+          <a href="/task/{{ ct.task.id }}" class="task-link">{{ ct.task.title }}</a>
+          <div style="font-size:11px; color:var(--text-3); font-family:var(--mono); margin-top:2px">
+            {{ ct.task.time_limit }}с / {{ ct.task.memory_limit }}МБ ·
+            {{ ct.task.scoring_type.value }}
+            {% if ct.task.max_score %} · {{ ct.task.max_score | int }} баллов{% endif %}
+          </div>
+        </div>
+        <form method="post" action="/admin/contest/{{ contest.id }}/remove/{{ ct.id }}">
+          <button class="btn btn--outline"
+                  style="font-size:12px; padding:3px 10px; color:var(--red); border-color:var(--red-dim)">
+            Удалить
+          </button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color:var(--text-2); font-size:14px">Задач пока нет — загрузи первую</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

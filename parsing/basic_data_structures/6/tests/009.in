@@ -1,0 +1,7 @@
+push 7
+front
+front
+size
+pop
+size
+exit

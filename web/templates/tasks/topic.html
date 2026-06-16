@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.title }} — OlympCode{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/">Задачи</a>
+  <span>›</span>
+  <span>{{ topic.title }}</span>
+</div>
+
+<div class="page-header">
+  <h1>{{ topic.title }}</h1>
+  <p>{{ tasks|length }} задач в этой теме</p>
+</div>
+
+<div class="card">
+  <ul class="task-list">
+    {% for task in tasks %}
+    <li class="task-list__item">
+      <span class="task-num">{{ task.order_in_topic }}</span>
+      <a href="/task/{{ task.id }}" class="task-link">{{ task.title }}</a>
+      <div style="display:flex; align-items:center; gap:12px">
+        <span style="font-size:12px; color:var(--text-3); font-family:var(--mono)">
+          {{ task.time_limit }}с / {{ task.memory_limit }}МБ
+        </span>
+        {% if user %}
+          {% set status = task_statuses.get(task.id) %}
+          {% if status %}
+            <span class="badge badge--{{ status | lower }}">{{ status }}</span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </li>
+    {% else %}
+    <li style="padding: 20px; color: var(--text-2); text-align:center">
+      Задачи в этой теме не найдены
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

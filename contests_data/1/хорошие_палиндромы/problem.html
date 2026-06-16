@@ -1,0 +1,365 @@
+<style>
+.problem-statement {
+    margin: 0.5em auto 2em auto;
+    font-family: verdana,serif;
+    line-height: 1.5em;
+    font-size: 14px;
+    max-width: 1024px;
+}
+
+.problem-statement .epigraph {
+    margin-left: 67%;
+    width: 33%;
+}
+
+.problem-statement .epigraph-text {
+}
+
+.problem-statement .epigraph-source {
+    border-top: 1px solid #888;
+    text-align: right;
+}
+
+.problem-statement .lstlisting {
+    padding: 0.5em;
+    
+}
+
+.problem-statement .tex-tabular {
+    margin: 1em 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.problem-statement .tex-tabular td {
+    padding: 0.15em 0.7em;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-left {
+    border-left: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-right {
+    border-right: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-top {
+    border-top: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-left {
+    text-align: left;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-center {
+    text-align: center;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-right {
+    text-align: right;
+}
+
+.problem-statement p {
+    margin: 0 0 1em 0;
+}
+
+.problem-statement p a, .problem-statement ul a, .problem-statement ol a, .problem-statement td a {
+    margin: 0;
+}
+
+.problem-statement .header {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    margin-bottom: 0.25em;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    font-family: arial, serif;
+}
+
+.problem-statement ul {
+    list-style: disc outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement ol {
+    list-style: decimal outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement li {
+    line-height: 1.5em;
+    margin-left: 3em;
+}
+
+.problem-statement .property-title {
+    display: inline;
+}
+
+.problem-statement .property-title:after {
+    content: ": ";
+}
+
+.problem-statement .time-limit, .problem-statement .memory-limit, .problem-statement .input-file, .problem-statement .output-file {
+    margin: 0 auto;
+}
+
+.problem-statement .legend {
+    margin-bottom: 1em;
+}
+
+.problem-statement .tutorial {
+    margin-bottom: 1em;
+}
+
+.problem-statement .section-title {
+    font-family: arial, serif;
+    font-size: 115%;
+    font-weight: bold;
+}
+
+.problem-statement .input-specification,
+    .problem-statement .output-specification,
+    .problem-statement .sample-tests,
+    .problem-statement .author,
+    .problem-statement .resource,
+    .problem-statement .date {
+    /*margin-bottom: 1em;*/
+}
+
+.problem-statement .output-specification {
+    margin-bottom: 1em;
+}
+
+.problem-statement .sample-tests .sample-test {
+}
+
+.problem-statement .sample-tests .input, .problem-statement .sample-tests .output {
+    border: 1px solid #888;
+}
+
+.problem-statement .sample-tests .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.problem-statement .sample-tests pre {
+    line-height: 1.25em;
+    padding: 0.25em;
+    margin: 0;
+    
+}
+
+.problem-statement .sample-tests .title {
+    font-family: arial, serif;
+    padding: 0.25em;
+    border-bottom: 1px solid #888;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+.problem-statement .tex-formula {
+    vertical-align: middle;
+    margin: 0;
+    border:medium none;
+    position: relative;
+    bottom: 2px;
+}
+
+.problem-statement .tex-span {
+    font-size: 125%;
+    font-family: times new roman, serif;
+    white-space: nowrap;
+}
+
+.problem-statement .tex-font-size-tiny {
+    font-size: 70%;
+}
+
+.problem-statement .tex-font-size-script {
+    font-size: 75%;
+}
+
+.problem-statement .tex-font-size-footnotes {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-small {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-normal {
+    font-size: 100%;
+}
+
+.problem-statement .tex-font-size-large-1 {
+    font-size: 115%;
+}
+
+.problem-statement .tex-font-size-large-2 {
+    font-size: 130%;
+}
+
+.problem-statement .tex-font-size-large-3 {
+    font-size: 145%;
+}
+
+.problem-statement .tex-font-size-huge-1 {
+    font-size: 175%;
+}
+
+.problem-statement .tex-font-size-huge-2 {
+    font-size: 200%;
+}
+
+.problem-statement .tex-font-style-rm {
+}
+
+.problem-statement .tex-font-style-striked {
+    text-decoration: line-through;
+}
+
+.problem-statement .tex-font-style-underline {
+    text-decoration: underline;
+}
+
+.problem-statement .tex-font-style-sf {
+    font-family: arial, serif;
+}
+
+.problem-statement .tex-font-style-tt {
+    font-size: 110%;
+    font-family: Consolas, "Lucida Console", "Andale Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+}
+
+.problem-statement .tex-font-style-md {
+}
+
+.problem-statement .tex-font-style-bf {
+    font-weight: bold;
+}
+
+.problem-statement .tex-font-style-up {
+}
+
+.problem-statement .tex-font-style-it {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sl {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sc {
+    text-transform: uppercase;
+}
+
+.problem-statement .text-hidden {
+    font-size: 0;
+    opacity: 0;
+    user-select: text;
+}
+
+.problem-statement .text-verb {
+    font-size: 110%;
+    font-family: Consolas, "Lucida Console", "Andale Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+    white-space: pre-wrap;
+}
+
+.problem-statement .verbatim {
+    font-size: 110%;
+    font-family: Consolas, "Lucida Console", "Andale Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+    white-space: pre-wrap;
+}
+
+.problem-statement .tex-graphics {
+    max-width: 95%;
+    display: block;
+}
+
+.problem-statement .tex-tabular .tex-graphics {
+    max-width: 100%;
+}
+
+.problem-statement .input-output-copier {
+    font-size: 0.75rem;
+    float: right;
+    color: #888;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid rgb(185, 185, 185);
+    line-height: 0.8rem;
+    text-transform: none;
+}
+
+.problem-statement .input-output-copier:hover {
+    background-color: #def;
+}
+
+.problem-statement .test-example-line-even {
+    background-color: #E0E0E0;
+}
+
+.statement-footnote {
+    font-size: 85%;
+    position: relative;
+}
+
+.statement-footnote::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 25%;
+    border-top: 1px solid #888;
+}
+
+.statement-footnote p {
+    margin-bottom: 0.5em;
+}
+
+.statement-footnote p:last-child {
+    margin-bottom: 1em;
+}
+
+.problem-statement .header .input-standard,
+.problem-statement .header .output-standard {
+    display: none;
+}
+
+</style>
+<DIV class="problem-statement"><DIV class="header"><DIV class="title">Хорошие палиндромы</DIV><DIV class="time-limit"><DIV class="property-title">ограничение по времени на тест</DIV>2 секунды</DIV><DIV class="memory-limit"><DIV class="property-title">ограничение по памяти на тест</DIV>512 мегабайт</DIV><DIV class="input-file input-standard"><DIV class="property-title">ввод</DIV>стандартный ввод</DIV><DIV class="output-file output-standard"><DIV class="property-title">вывод</DIV>стандартный вывод</DIV></DIV><DIV class="legend"><P>Рассмотрим процесс на строке $$$s$$$, состоящей только из символов "a" и "b". На каждом шаге этого процесса из строки одновременно удаляются первое и последнее вхождение букв "a" и "b" (если такие вхождения есть). Обратите внимание, что первое и последнее вхождение могут совпадать. Нас интересует первый момент, после которого строка $$$s$$$ станет палиндромом. Палиндромом называется строка, которая читается одинаково слева-направо и справа-налево. Пустая строка считается палиндромом. Номер шага, после которого строка становится палиндромом, назовем красотой строки. </P><P>Пусть $$$s$$$ = "<SPAN class="tex-font-style-underline">a</SPAN>a<SPAN class="tex-font-style-underline">b</SPAN>aaba<SPAN class="tex-font-style-underline">b</SPAN><SPAN class="tex-font-style-underline">a</SPAN>". Первые и последние вхождения каждой буквы подчеркнуты.</P><P>После первого шага процесса $$$s$$$ = "<SPAN class="tex-font-style-underline">a</SPAN>aa<SPAN class="tex-font-style-underline">b</SPAN><SPAN class="tex-font-style-underline">a</SPAN>". Здесь первое и последнее вхождение буквы "b" совпадают.</P><P>После второго шага процесса $$$s$$$ = "aa", это палиндром, поэтому красота $$$s$$$ равна $$$2$$$.</P><P>Дана строка $$$t$$$, состоящая из символов $$$"a"$$$ и $$$"b"$$$. Вам поступит $$$q$$$ запросов двух типов:</P><P>$$$!$$$ $$$i$$$&nbsp;&mdash; изменить $$$i$$$-й символ в $$$t$$$ на другой ("a" меняется на "b" и наоборот).</P><P>$$$?$$$ $$$l$$$ $$$r$$$&nbsp;&mdash; узнать красоту подстроки $$$t[l...r]$$$.</P><P>Обратите внимание, что запросы первого типа влияют на все последующие запросы, а запросы второго типа никак не меняют строку $$$t$$$.</P></DIV><P></P><P></P><DIV class="input-specification"><DIV class="section-title">Входные данные</DIV><P></P><P>В первой строке входных данных вводится строка $$$t$$$ $$$(1 \le |t| \le 2 \cdot 10^5)$$$. Гарантируется, что $$$t$$$ состоит только из букв "a" и "b".</P><P>В следующей строке входных данных вводится единственное число $$$q$$$ $$$(1 \le q \le 2 \cdot 10^5)$$$&nbsp;&mdash; количество запросов.</P><P>Следующие $$$q$$$ строк содержат описания запросов. Описание каждого запроса имеет следующий вид:</P><P>$$$!$$$ $$$i$$$ $$$(1 \le i \le n)$$$&nbsp;&mdash; изменить символ в строке.</P><P>$$$?$$$ $$$l$$$ $$$r$$$ $$$(1 \le l \le r \le n)$$$&nbsp;&mdash; узнать красоту подстроки $$$t[l...r]$$$.</P></DIV><P></P><P></P><DIV class="output-specification"><DIV class="section-title">Выходные данные</DIV><P></P><P>Для каждого запроса второго типа выведите соответствующую красоту подстроки.</P></DIV><P></P><P></P><DIV class="scoring"><DIV class="section-title">Система оценки</DIV><P></P><P>Решения, верно работающие при $$$|t|, q \le 100$$$ будут набирать не менее 12 баллов.</P><P>Решения, верно работающие при $$$t = "ababa..."$$$ и $$$n, q \le 100000$$$ и без запросов первого типа будут набирать не менее 12 баллов.</P><P>Решения, верно работающие при $$$|t|, q \le 5000$$$ будут набирать не менее 28 баллов.</P><P>Решения, верно работающие при $$$|t|, q \le 100000$$$ и без запросов первого типа будут набирать не менее 35 баллов.</P><P>Решения, верно работающие при $$$|t|, q \le 80000$$$ будут набирать не менее 63 баллов.</P></DIV><P></P><P></P><DIV class="sample-tests"><DIV class="section-title">Примеры</DIV><P></P><P></P><DIV class="sample-test"><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content" data-content="aabab
+4
+? 3 5
+? 1 5
+! 1
+? 1 5
+">
+<DIV >aabab</DIV><DIV >4</DIV><DIV >? 3 5</DIV><DIV >? 1 5</DIV><DIV >! 1</DIV><DIV >? 1 5</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+0
+1
+0
+</PRE></DIV><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content" data-content="aaababbaba
+6
+? 1 10
+! 2
+? 1 10
+? 2 7
+! 4
+? 2 8
+">
+<DIV >aaababbaba</DIV><DIV >6</DIV><DIV >? 1 10</DIV><DIV >! 2</DIV><DIV >? 1 10</DIV><DIV >? 2 7</DIV><DIV >! 4</DIV><DIV >? 2 8</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+2
+3
+1
+2
+</PRE></DIV></DIV></DIV><P></P><P></P><DIV class="note"><DIV class="section-title">Примечание</DIV><P></P><P>Разберем первый пример. </P><P>Первый запрос приходит к подстроке $$$t[3...5] = "bab"$$$, которая уже является палиндромом, поэтому ответ на этот запрос равен $$$0$$$.</P><P>Второй запрос приходит ко всей строке $$$t$$$, которая палиндромом не является. После одного шага процесса строка бы превратилась в $$$"a"$$$, что уже является палиндромом, поэтому ответ на этот запрос равен $$$1$$$.</P><P>Третий запрос меняет в строке $$$t$$$ первый символ, после чего $$$t = "babab"$$$.</P><P>Четвертый запрос снова приходит ко всей строке, которая стала палиндромом после третьего запроса, поэтому ответ на этот запрос равен $$$0$$$.</P></DIV></DIV><P></P><P>  </P>

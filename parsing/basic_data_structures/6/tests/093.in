@@ -1,0 +1,201 @@
+push 1
+clear
+push 2
+clear
+push 3
+front
+pop
+push 4
+size
+clear
+push 5
+pop
+push 6
+front
+front
+size
+size
+size
+push 7
+front
+clear
+push 8
+front
+front
+pop
+push 9
+push 10
+push 11
+clear
+push 12
+clear
+push 13
+clear
+push 14
+pop
+push 15
+pop
+push 16
+size
+size
+pop
+push 17
+pop
+push 18
+pop
+push 19
+size
+push 20
+push 21
+front
+push 22
+clear
+push 23
+size
+clear
+push 24
+front
+pop
+push 25
+size
+front
+front
+pop
+push 26
+front
+size
+push 27
+push 28
+front
+push 29
+size
+push 30
+front
+push 31
+clear
+push 32
+push 33
+clear
+push 34
+front
+pop
+push 35
+pop
+push 36
+size
+front
+push 37
+clear
+push 38
+front
+size
+size
+size
+clear
+push 39
+pop
+push 40
+clear
+push 41
+push 42
+size
+clear
+push 43
+push 44
+clear
+push 45
+size
+front
+size
+size
+pop
+push 46
+clear
+push 47
+size
+clear
+push 48
+size
+size
+push 49
+size
+clear
+push 50
+clear
+push 51
+pop
+push 52
+clear
+push 53
+clear
+push 54
+size
+pop
+push 55
+pop
+push 56
+size
+push 57
+push 58
+front
+clear
+push 59
+push 60
+front
+push 61
+clear
+push 62
+size
+size
+front
+push 63
+clear
+push 64
+front
+clear
+push 65
+front
+front
+clear
+push 66
+front
+clear
+push 67
+pop
+push 68
+push 69
+push 70
+push 71
+front
+clear
+push 72
+front
+front
+clear
+push 73
+size
+clear
+push 74
+push 75
+front
+clear
+push 76
+clear
+push 77
+size
+pop
+push 78
+pop
+push 79
+clear
+push 80
+pop
+push 81
+pop
+push 82
+clear
+push 83
+push 84
+size
+front
+exit

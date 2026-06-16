@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Олимпиады — OlympCode{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Олимпиады</h1>
+  <p>Архив задач прошедших соревнований</p>
+</div>
+
+{% if contests %}
+<div class="topics-grid">
+  {% for contest in contests %}
+  <a href="/contests/{{ contest.id }}" class="topic-card">
+    <div class="topic-card__title">{{ contest.title }}</div>
+    <div class="topic-card__meta">
+      {% if contest.year %}<span>{{ contest.year }}</span>{% endif %}
+      <span>{{ contest.contest_tasks | length }} задач</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center; padding:60px; color:var(--text-2)">
+  <p style="font-size:17px; margin-bottom:8px">Олимпиады ещё не добавлены</p>
+  {% if user and user.is_admin %}
+  <a href="/admin/" class="btn btn--outline" style="margin-top:16px">Открыть админку</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

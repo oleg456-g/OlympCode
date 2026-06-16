@@ -1,0 +1,358 @@
+<style>
+.problem-statement {
+    margin: 0.5em auto 2em auto;
+    font-family: verdana,serif;
+    line-height: 1.5em;
+    font-size: 14px;
+    max-width: 1024px;
+}
+
+.problem-statement .epigraph {
+    margin-left: 67%;
+    width: 33%;
+}
+
+.problem-statement .epigraph-text {
+}
+
+.problem-statement .epigraph-source {
+    border-top: 1px solid #888;
+    text-align: right;
+}
+
+.problem-statement .lstlisting {
+    padding: 0.5em;
+    
+}
+
+.problem-statement .tex-tabular {
+    margin: 1em 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.problem-statement .tex-tabular td {
+    padding: 0.15em 0.7em;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-left {
+    border-left: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-right {
+    border-right: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-top {
+    border-top: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-left {
+    text-align: left;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-center {
+    text-align: center;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-right {
+    text-align: right;
+}
+
+.problem-statement p {
+    margin: 0 0 1em 0;
+}
+
+.problem-statement p a, .problem-statement ul a, .problem-statement ol a, .problem-statement td a {
+    margin: 0;
+}
+
+.problem-statement .header {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    margin-bottom: 0.25em;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    font-family: arial, serif;
+}
+
+.problem-statement ul {
+    list-style: disc outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement ol {
+    list-style: decimal outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement li {
+    line-height: 1.5em;
+    margin-left: 3em;
+}
+
+.problem-statement .property-title {
+    display: inline;
+}
+
+.problem-statement .property-title:after {
+    content: ": ";
+}
+
+.problem-statement .time-limit, .problem-statement .memory-limit, .problem-statement .input-file, .problem-statement .output-file {
+    margin: 0 auto;
+}
+
+.problem-statement .legend {
+    margin-bottom: 1em;
+}
+
+.problem-statement .tutorial {
+    margin-bottom: 1em;
+}
+
+.problem-statement .section-title {
+    font-family: arial, serif;
+    font-size: 115%;
+    font-weight: bold;
+}
+
+.problem-statement .input-specification,
+    .problem-statement .output-specification,
+    .problem-statement .sample-tests,
+    .problem-statement .author,
+    .problem-statement .resource,
+    .problem-statement .date {
+    /*margin-bottom: 1em;*/
+}
+
+.problem-statement .output-specification {
+    margin-bottom: 1em;
+}
+
+.problem-statement .sample-tests .sample-test {
+}
+
+.problem-statement .sample-tests .input, .problem-statement .sample-tests .output {
+    border: 1px solid #888;
+}
+
+.problem-statement .sample-tests .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.problem-statement .sample-tests pre {
+    line-height: 1.25em;
+    padding: 0.25em;
+    margin: 0;
+    
+}
+
+.problem-statement .sample-tests .title {
+    font-family: arial, serif;
+    padding: 0.25em;
+    border-bottom: 1px solid #888;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+.problem-statement .tex-formula {
+    vertical-align: middle;
+    margin: 0;
+    border:medium none;
+    position: relative;
+    bottom: 2px;
+}
+
+.problem-statement .tex-span {
+    font-size: 125%;
+    font-family: times new roman, serif;
+    white-space: nowrap;
+}
+
+.problem-statement .tex-font-size-tiny {
+    font-size: 70%;
+}
+
+.problem-statement .tex-font-size-script {
+    font-size: 75%;
+}
+
+.problem-statement .tex-font-size-footnotes {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-small {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-normal {
+    font-size: 100%;
+}
+
+.problem-statement .tex-font-size-large-1 {
+    font-size: 115%;
+}
+
+.problem-statement .tex-font-size-large-2 {
+    font-size: 130%;
+}
+
+.problem-statement .tex-font-size-large-3 {
+    font-size: 145%;
+}
+
+.problem-statement .tex-font-size-huge-1 {
+    font-size: 175%;
+}
+
+.problem-statement .tex-font-size-huge-2 {
+    font-size: 200%;
+}
+
+.problem-statement .tex-font-style-rm {
+}
+
+.problem-statement .tex-font-style-striked {
+    text-decoration: line-through;
+}
+
+.problem-statement .tex-font-style-underline {
+    text-decoration: underline;
+}
+
+.problem-statement .tex-font-style-sf {
+    font-family: arial, serif;
+}
+
+.problem-statement .tex-font-style-tt {
+    font-size: 110%;
+    font-family: Consolas, "Lucida Console", "Andale Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+}
+
+.problem-statement .tex-font-style-md {
+}
+
+.problem-statement .tex-font-style-bf {
+    font-weight: bold;
+}
+
+.problem-statement .tex-font-style-up {
+}
+
+.problem-statement .tex-font-style-it {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sl {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sc {
+    text-transform: uppercase;
+}
+
+.problem-statement .text-hidden {
+    font-size: 0;
+    opacity: 0;
+    user-select: text;
+}
+
+.problem-statement .text-verb {
+    font-size: 110%;
+    font-family: Consolas, "Lucida Console", "Andale Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+    white-space: pre-wrap;
+}
+
+.problem-statement .verbatim {
+    font-size: 110%;
+    font-family: Consolas, "Lucida Console", "Andale Mono", "Bitstream Vera Sans Mono", "Courier New", Courier, monospace;
+    white-space: pre-wrap;
+}
+
+.problem-statement .tex-graphics {
+    max-width: 95%;
+    display: block;
+}
+
+.problem-statement .tex-tabular .tex-graphics {
+    max-width: 100%;
+}
+
+.problem-statement .input-output-copier {
+    font-size: 0.75rem;
+    float: right;
+    color: #888;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid rgb(185, 185, 185);
+    line-height: 0.8rem;
+    text-transform: none;
+}
+
+.problem-statement .input-output-copier:hover {
+    background-color: #def;
+}
+
+.problem-statement .test-example-line-even {
+    background-color: #E0E0E0;
+}
+
+.statement-footnote {
+    font-size: 85%;
+    position: relative;
+}
+
+.statement-footnote::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 25%;
+    border-top: 1px solid #888;
+}
+
+.statement-footnote p {
+    margin-bottom: 0.5em;
+}
+
+.statement-footnote p:last-child {
+    margin-bottom: 1em;
+}
+
+.problem-statement .header .input-standard,
+.problem-statement .header .output-standard {
+    display: none;
+}
+
+</style>
+<DIV class="problem-statement"><DIV class="header"><DIV class="title">Факультет Дедлайнов</DIV><DIV class="time-limit"><DIV class="property-title">ограничение по времени на тест</DIV>0.6 секунд</DIV><DIV class="memory-limit"><DIV class="property-title">ограничение по памяти на тест</DIV>256 мегабайт</DIV><DIV class="input-file input-standard"><DIV class="property-title">ввод</DIV>стандартный ввод</DIV><DIV class="output-file output-standard"><DIV class="property-title">вывод</DIV>стандартный вывод</DIV></DIV><DIV class="legend"><P>Климентий учится на Факультете Дедлайнов. Семестр длится $$$m$$$ дней, в течение семестра Климентию предстоит выполнить $$$n$$$ заданий. </P><P>Задание с номером $$$i$$$ нужно выполнить с дня $$$l_i$$$ до дня $$$r_i$$$ включительно. Задание можно выполнить в любой день $$$p$$$ $$$\left(l_i \leq p \leq r_i\right)$$$. </P><P>Также для каждого дня $$$p = 1, 2, \ldots, m$$$ известна продуктивность Климентия, которая выражается целым неотрицательным числом $$$a_p$$$.</P><P><SPAN class="tex-font-style-it">Массив значений продуктивности $$$a_1, a_2, \ldots, a_m$$$ задан следующим рекуррентным соотношением:</SPAN></P><P>$$$\bullet$$$ $$$a_1 = x$$$</P><P>$$$\bullet$$$ Для всех $$$k = 2, 3, \ldots, m$$$ $$$a_k = \left(a_{k - 1} \cdot b + c\right) \% mod$$$, где $$$\%$$$&nbsp;&mdash; операция взятия остатка от деления, а $$$mod$$$&nbsp;&mdash; число, остаток от деления на которое вычисляется. </P><P>Климентий хочет посвятить выполнению заданий только один день в семестре. Необходимо выбрать такой день $$$p$$$, чтобы произведение $$$cnt(p) \cdot a_p$$$ было максимально. Здесь $$$cnt(p)$$$&nbsp;&mdash; количество заданий, которые можно сдать в день $$$p$$$.</P><P>Определите максимальное произведение $$$cnt(p) \cdot a_p$$$.</P></DIV><P></P><P></P><DIV class="input-specification"><DIV class="section-title">Входные данные</DIV><P></P><P>В первой строке вводятся два целых числа $$$n, m$$$&nbsp;&mdash; количество заданий и количество дней в семестре $$$\left(1 \leq n \leq 2 \cdot 10^5, 1 \leq m \leq 2 \cdot 10^9\right)$$$.</P><P>Во второй строке вводятся четыре целых числа $$$x, b, c, mod$$$, определяющие массив продуктивностей $$$a$$$ $$$\left(0 \leq x  \lt  mod, 0 \leq b, c \leq 10^9, 1 \leq mod \leq 2 \cdot 10^5\right)$$$.</P><P>В следующих $$$n$$$ строках вводятся границы дней для выполнения каждого из $$$n$$$ заданий. Каждая граница описывается двумя числами $$$l_i, r_i$$$ $$$\left(1 \leq l_i \leq r_i \leq m\right)$$$.</P></DIV><P></P><P></P><DIV class="output-specification"><DIV class="section-title">Выходные данные</DIV><P></P><P>В единственной строке выведите одно целое число&nbsp;&mdash; максимальное значение $$$cnt(p) \cdot a_p$$$.</P></DIV><P></P><P></P><DIV class="scoring"><DIV class="section-title">Система оценки</DIV><P></P><P>Решения, работающие для ограничений $$$n, m \le 2000$$$, наберут не меньше $$$20$$$ баллов</P><P>Решения, работающие для ограничений $$$m \le 2 \cdot 10^5$$$, наберут не меньше $$$40$$$ баллов</P><P>Решения, работающие для ограничений $$$n, mod \le 2000$$$, наберут не меньше $$$60$$$ баллов</P><P>Решения, работающие для ограничений $$$mod \le 2000$$$, наберут не меньше $$$74$$$ баллов</P><P>Решения, работающие без дополнительных ограничений, наберут $$$100$$$ баллов</P></DIV><P></P><P></P><DIV class="sample-tests"><DIV class="section-title">Примеры</DIV><P></P><P></P><DIV class="sample-test"><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content" data-content="3 10
+1 2 3 7
+1 3
+2 6
+5 10
+">
+<DIV >3 10</DIV><DIV >1 2 3 7</DIV><DIV >1 3</DIV><DIV >2 6</DIV><DIV >5 10</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+12</PRE></DIV><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content" data-content="7 12
+3 4 2 9
+1 4
+3 8
+6 12
+2 2
+9 12
+4 10
+1 12
+">
+<DIV >7 12</DIV><DIV >3 4 2 9</DIV><DIV >1 4</DIV><DIV >3 8</DIV><DIV >6 12</DIV><DIV >2 2</DIV><DIV >9 12</DIV><DIV >4 10</DIV><DIV >1 12</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+32</PRE></DIV></DIV></DIV><P></P><P></P><DIV class="note"><DIV class="section-title">Примечание</DIV><P></P><P>$$$\bullet$$$ <SPAN class="tex-font-style-it">Рассмотрим первый пример</SPAN></P><P>Массив продуктивностей выглядит следующим образом:</P><P>$$$1, 5, 6, 1, 5, 6, 1, 5, 6, 1$$$</P><P>Для каждого $$$p = 1, 2, \ldots, 10$$$ количество заданий, которые можно сдать в день $$$p$$$, равно:</P><P>$$$1, 2, 2, 1, 2, 2, 1, 1, 1, 1$$$</P><P>И для каждого $$$p = 1, 2, \ldots, 10$$$ произведение $$$cnt(p) \cdot a_p$$$ равно:</P><P>$$$1, 10, 12, 1, 10, 12, 1, 5, 6, 1$$$</P><P>Таким образом, максимальный ответ равен $$$12$$$.</P><P>$$$\bullet$$$ <SPAN class="tex-font-style-it">Рассмотрим второй пример</SPAN></P><P>Массив продуктивностей выглядит следующим образом:</P><P>$$$3, 5, 4, 0, 2, 1, 6, 8, 7, 3, 5, 4$$$</P><P>Для каждого $$$p = 1, 2, \ldots, 12$$$ количество заданий, которые можно сдать в день $$$p$$$, равно:</P><P>$$$2, 3, 3, 4, 3, 4, 4, 4, 4, 4, 3, 3$$$</P><P>И для каждого $$$p = 1, 2, \ldots, 12$$$ произведение $$$cnt(p) \cdot a_p$$$ равно:</P><P>$$$6, 15, 12, 0, 6, 4, 24, 32, 28, 12, 15, 12$$$</P><P>Таким образом, максимальный ответ равен $$$32$$$.</P></DIV></DIV><P></P><P>  </P>

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Админка — OlympCode{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Панель администратора</h1>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start">
+
+  <!-- Создать олимпиаду -->
+  <div class="card">
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Новая олимпиада</h2>
+    <form method="post" action="/admin/contest/create">
+      <div class="form-group">
+        <label>Название</label>
+        <input class="form-input" name="title" required placeholder="Тинькофф 2024, IOI 2023...">
+      </div>
+      <div class="form-group">
+        <label>Год</label>
+        <input class="form-input" name="year" type="number" placeholder="2024">
+      </div>
+      <div class="form-group">
+        <label>Описание (необязательно)</label>
+        <input class="form-input" name="description" placeholder="Очный тур, задачи A–F">
+      </div>
+      <button class="btn btn--primary" type="submit">Создать</button>
+    </form>
+  </div>
+
+  <!-- Список олимпиад -->
+  <div class="card">
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">
+      Олимпиады ({{ contests | length }})
+    </h2>
+    {% if contests %}
+    <ul class="task-list">
+      {% for contest in contests %}
+      <li class="task-list__item">
+        <span class="task-num">{{ contest.year or '—' }}</span>
+        <a href="/admin/contest/{{ contest.id }}" class="task-link">{{ contest.title }}</a>
+        <span style="font-size:12px; color:var(--text-3)">
+          {{ contest.contest_tasks | length }} задач
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color:var(--text-2); font-size:14px">Пока нет олимпиад</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<div class="card" style="margin-top:16px">
+  <div style="display:flex; justify-content:space-between; align-items:center">
+    <span style="font-size:14px; color:var(--text-2)">Всего задач в базе: <b>{{ tasks_count }}</b></span>
+    <a href="/admin/reimport" class="btn btn--outline" style="font-size:13px">
+      ↺ Переимпортировать parsing/
+    </a>
+  </div>
+</div>
+{% endblock %}

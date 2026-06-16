@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}OlympCode{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">  
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="/" class="nav-logo">OlympCode<span class="logo-dot">.</span></a>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Задачи</a>
+    <a href="/contests/" class="nav-link">Олимпиады</a>
+    {% if user %}
+      {% if user.is_admin %}<a href="/admin/" class="nav-link" style="color:var(--amber)">Админ</a>{% endif %}
+      <a href="/profile/" class="nav-link">{{ user.username }}</a>
+      <a href="/auth/logout" class="nav-link nav-link--muted">Выйти</a>
+    {% else %}
+      <a href="/auth/login" class="nav-link">Войти</a>
+      <a href="/auth/register" class="btn btn--sm btn--primary">Регистрация</a>
+    {% endif %}
+  </div>
+</nav>
+
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <span>OlympCode — олимпиадное программирование для школьников</span>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

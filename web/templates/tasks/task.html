@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }} — OlympCode{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  {% if contest %}
+    <a href="/contests">Олимпиады</a>
+    <span>›</span>
+    <a href="/contests/{{ contest.id }}">{{ contest.title }}</a>
+    <span>›</span>
+    <span>{{ task.title }}</span>
+  {% else %}
+    <a href="/">Задачи</a>
+    <span>›</span>
+    <a href="/topic/{{ task.topic.slug }}">{{ task.topic.title }}</a>
+    <span>›</span>
+    <span>{{ task.title }}</span>
+  {% endif %}
+</div>
+
+<div class="task-limits">
+  <span class="limit-badge">⏱ {{ task.time_limit }} с</span>
+  <span class="limit-badge">💾 {{ task.memory_limit }} МБ</span>
+  <span class="limit-badge">stdin / stdout</span>
+</div>
+
+<div class="statement">
+  {{ statement_html | safe }}
+</div>
+
+<div class="submissions-section" id="submissions-section" {% if not last_submissions %}style="display:none"{% endif %}>
+  <div class="submissions-header">
+    <span class="section-label">МОИ ПОСЫЛКИ</span>
+    <button class="btn btn--outline btn--small" id="toggle-subs" onclick="toggleSubs()">Свернуть</button>
+  </div>
+  <div id="subs-wrap">
+    <table class="submissions-table">
+      <thead>
+        <tr><th>№</th><th>Вердикт</th><th>Язык</th><th>Тест</th><th>Время</th><th>Дата</th></tr>
+      </thead>
+      <tbody id="submissions-tbody">
+        {% for s in last_submissions %}
+        <tr id="row-{{ s.id }}"{% if loop.index > 5 %} class="sub-extra sub-extra--hidden"{% endif %}>
+          <td><a href="/submissions/{{ s.id }}" class="sub-link">#{{ s.task_submission_number }}</a></td>
+          <td>
+            <span class="badge badge--{{ s.verdict.value.lower() }}" id="verdict-text-{{ s.id }}">
+              {% if task.scoring_type.value != 'icpc' and s.score is not none %}
+                {{ s.score | round | int }}/{{ task.max_score | round | int }}
+              {% else %}
+                {{ s.verdict.value }}
+              {% endif %}
+            </span>
+          </td>
+          <td>{{ s.language }}</td>
+          <td>{{ s.failed_test if s.failed_test else '—' }}</td>
+          <td>{{ '%.2f'|format(s.execution_time) + 'с' if s.execution_time else '—' }}</td>
+          <td class="sub-date">{{ s.submitted_at.strftime('%d.%m %H:%M') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if last_submissions | length > 5 %}
+    <button class="btn btn--outline btn--full-width" id="show-more-btn" onclick="showMoreSubs()">
+      Показать все ({{ last_submissions | length }})
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+{% if user %}
+<div class="editor-section">
+  <div class="editor-topbar">
+    <span class="section-label">РЕШЕНИЕ</span>
+    <div class="editor-actions">
+      <select class="lang-select" id="lang-select">
+        <option value="cpp">C++17</option>
+        <option value="python">Python 3</option>
+      </select>
+      <label class="file-upload-btn">
+        📎 Загрузить файл
+        <input type="file" id="file-input" accept=".cpp,.py,.txt" style="display:none">
+      </label>
+    </div>
+  </div>
+
+  <div id="editor-container"></div>
+
+  <div class="editor-footer">
+    <span class="char-count" id="char-count">0 символов</span>
+    <button class="btn btn--primary" id="submit-btn" onclick="submitCode()">Отправить →</button>
+  </div>
+</div>
+
+<div id="submit-statuses" class="statuses-container"></div>
+
+{% else %}
+<div class="card auth-prompt-card">
+  <p class="auth-prompt-text">Чтобы отправить решение, войди в аккаунт</p>
+  <a href="/auth/login" class="btn btn--primary">Войти</a>
+  <div class="auth-prompt-footer">
+    или <a href="/auth/register">зарегистрироваться</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['$$$', '$$$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]'], ['$$$$$$','$$$$$$']]
+    },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+<style>
+
+.CodeMirror {
+  height: 100% !important; /* Заставляем редактор тянуться за контейнером */
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  border: none;
+}
+
+#editor-container {
+  height: 420px; /* Перенесли начальную высоту сюда */
+  resize: vertical;
+  overflow: hidden;
+  min-height: 200px;
+  max-height: 700px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Карточка статуса одной посылки */
+.status-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+.status-card__main { display: flex; align-items: center; gap: 10px; width: 100%; }
+
+/* Хедер секции посылок */
+.submissions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.submissions-header .section-label { margin: 0; }
+.sub-link { color: var(--blue); }
+.sub-date { color: var(--text-3); }
+.sub-extra--hidden { display: none; }
+
+/* Утилиты для кнопок и контейнеров */
+.btn--small { font-size: 12px; padding: 3px 10px; }
+.btn--full-width { width: 100%; margin-top: 8px; font-size: 12px; }
+.editor-actions { display: flex; align-items: center; gap: 10px; }
+.statuses-container { margin-top: 12px; }
+.error-block { margin-top: 8px; width: 100%; font-size: 12px; }
+
+/* Карточка авторизации */
+.auth-prompt-card { text-align: center; padding: 32px; margin-top: 32px; }
+.auth-prompt-text { color: var(--text-2); margin-bottom: 16px; }
+.auth-prompt-footer { margin-top: 12px; font-size: 13px; color: var(--text-3); }
+
+/* Ячейки таблицы с примерами и блоки кода */
+.statement td { vertical-align: top; }
+.statement .example-table td { position: relative; padding-top: 38px; }
+.statement pre { position: relative; padding-top: 42px !important; }
+
+/* ── ИСПРАВЛЕННАЯ КНОПКА КОПИРОВАНИЯ ── */
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  
+  /* Фиксированная ширина решает проблему «схлопывания» */
+  width: 105px;
+  height: 26px;
+  
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  
+  color: #c9d1d9;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 600; /* Выраженный, сочный текст */
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  cursor: pointer;
+  z-index: 1;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+}
+
+.copy-btn:hover {
+  background: #30363d;
+  border-color: #8b949e;
+  color: #fff;
+}
+
+/* Обертки для текста и иконки */
+.copy-btn-inner-text,
+.copy-btn-inner-icon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+
+/* Дефолтное состояние */
+.copy-btn-inner-text {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.copy-btn-inner-icon {
+  opacity: 0;
+  transform: translateY(18px); /* Прячем снизу */
+  color: #3fb950;
+}
+
+/* Состояние ПОСЛЕ копирования */
+.copy-btn.copied {
+  border-color: #3fb950;
+  background: #1f2a22; /* Легкий зеленый оттенок фона при успехе */
+  pointer-events: none;
+}
+
+.copy-btn.copied .copy-btn-inner-text {
+  opacity: 0;
+  transform: translateY(-18px); /* Выталкиваем текст наверх */
+}
+
+.copy-btn.copied .copy-btn-inner-icon {
+  opacity: 1;
+  transform: translateY(0); /* Закатываем галочку по центру */
+}
+</style>
+
+<script>
+const TASK_ID     = {{ task.id }};
+const STORAGE_KEY = `olymp_code_${TASK_ID}`;
+const LANG_KEY    = `olymp_lang_${TASK_ID}`;
+
+const templates = {
+  cpp:    `#include <iostream>\nusing namespace std;\n\nint main() {\n    \n    return 0;\n}`,
+  python: `import sys\ninput = sys.stdin.readline\n\n`,
+};
+
+const savedCode = localStorage.getItem(STORAGE_KEY) || templates.cpp;
+const savedLang = localStorage.getItem(LANG_KEY) || 'cpp';
+const cmModes   = { cpp: 'text/x-c++src', python: 'text/x-python' };
+
+const editor = CodeMirror(document.getElementById('editor-container'), {
+  value: savedCode,
+  mode: cmModes[savedLang],
+  theme: 'dracula',
+  lineNumbers: true,
+  autoCloseBrackets: true,
+  matchBrackets: true,
+  indentUnit: 4,
+  tabSize: 4,
+  indentWithTabs: false,
+  extraKeys: { Tab: cm => cm.execCommand('insertSoftTab') },
+});
+
+const langSelect = document.getElementById('lang-select');
+if (langSelect) langSelect.value = savedLang;
+
+const counter = document.getElementById('char-count');
+function updateCounter() {
+  if (counter) counter.textContent = editor.getValue().length.toLocaleString('ru') + ' символов';
+}
+updateCounter();
+
+editor.on('change', () => {
+  updateCounter();
+  localStorage.setItem(STORAGE_KEY, editor.getValue());
+});
+
+langSelect?.addEventListener('change', () => {
+  const lang = langSelect.value;
+  localStorage.setItem(LANG_KEY, lang);
+  editor.setOption('mode', cmModes[lang]);
+  const current = editor.getValue().trim();
+  const isAnyTemplate = Object.values(templates).some(t => t.trim() === current);
+  if (!current || isAnyTemplate) {
+    editor.setValue(templates[lang] || '');
+    localStorage.setItem(STORAGE_KEY, editor.getValue());
+    updateCounter();
+  }
+});
+
+document.getElementById('file-input')?.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    editor.setValue(ev.target.result);
+    localStorage.setItem(STORAGE_KEY, ev.target.result);
+    updateCounter();
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ── Свёртывание посылок ────────────────────────────────────────────────
+let subsVisible = true;
+let allSubsShown = false;
+
+function toggleSubs() {
+  const wrap = document.getElementById('subs-wrap');
+  const btn  = document.getElementById('toggle-subs');
+  subsVisible = !subsVisible;
+  wrap.style.display = subsVisible ? '' : 'none';
+  btn.textContent    = subsVisible ? 'Свернуть' : 'Развернуть';
+  if (!subsVisible) allSubsShown = false;
+}
+
+function showMoreSubs() {
+  document.querySelectorAll('.sub-extra').forEach(r => r.classList.remove('sub-extra--hidden'));
+  const showBtn = document.getElementById('show-more-btn');
+  if (showBtn) showBtn.style.display = 'none';
+
+  let hideBtn = document.getElementById('hide-extra-btn');
+  if (!hideBtn) {
+    hideBtn = document.createElement('button');
+    hideBtn.id        = 'hide-extra-btn';
+    hideBtn.className = 'btn btn--outline btn--full-width';
+    hideBtn.textContent   = 'Показать последние 5';
+    hideBtn.onclick = hideExtraSubs;
+    document.getElementById('subs-wrap').appendChild(hideBtn);
+  }
+  hideBtn.style.display = '';
+  allSubsShown = true;
+}
+
+function hideExtraSubs() {
+  document.querySelectorAll('.sub-extra').forEach(r => r.classList.add('sub-extra--hidden'));
+  const showBtn = document.getElementById('show-more-btn');
+  if (showBtn) showBtn.style.display = '';
+  const hideBtn = document.getElementById('hide-extra-btn');
+  if (hideBtn) hideBtn.style.display = 'none';
+  allSubsShown = false;
+}
+
+// ── Вердикты ───────────────────────────────────────────────────────────
+const FINAL_VERDICTS  = ['AC','WA','TLE','MLE','RE','CE'];
+const VERDICT_CLASSES = {
+  AC:'badge--ac', WA:'badge--wa', TLE:'badge--tle',
+  MLE:'badge--mle', RE:'badge--re', CE:'badge--ce',
+  PENDING:'badge--pending', RUNNING:'badge--running',
+};
+
+// ── AJAX отправка ─────────────────────────────────────────────────────
+async function submitCode() {
+  const code = editor.getValue().trim();
+  if (!code) return;
+
+  const form = new FormData();
+  form.append('code', editor.getValue());
+  form.append('language', langSelect.value);
+
+  const section = document.getElementById('submissions-section');
+  section.style.display = '';
+  if (!subsVisible) toggleSubs();
+
+  let subId, subNum;
+  try {
+    const res  = await fetch(`/submissions/submit/${TASK_ID}`, { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    subId  = data.submission_id;
+    subNum = data.task_submission_number;
+  } catch (err) {
+    alert('Ошибка отправки: ' + err.message);
+    return;
+  }
+
+  addSubmissionRow(subId, subNum, langSelect.value);
+
+  const statusesDiv = document.getElementById('submit-statuses');
+  const card = document.createElement('div');
+  card.className = 'status-card';
+  card.id = `status-${subId}`;
+  card.innerHTML = `
+    <div class="status-card__main">
+      <span class="spinner"></span>
+      <span>Посылка <b>#${subNum}</b> — проверяется...</span>
+      <span class="badge badge--pending" id="sbadge-${subId}">PENDING</span>
+    </div>
+  `;
+  statusesDiv.insertBefore(card, statusesDiv.firstChild);
+
+  pollVerdict(subId, subNum);
+}
+
+async function pollVerdict(subId, subNum) {
+  while (true) {
+    await new Promise(r => setTimeout(r, 1200));
+    try {
+      const res  = await fetch(`/submissions/status/${subId}`);
+      const data = await res.json();
+
+      updateSubmissionRow(subId, data);
+
+      const badge = document.getElementById(`verdict-text-${subId}`);
+      if (badge) {
+          // Обновляем цвет класса под новый вердикт
+          badge.className = `badge badge--${data.verdict.toLowerCase()}`;
+          
+          // Проверяем тип задачи, который возвращает /submissions/status/{id}
+          if (data.scoring_type !== 'icpc' && data.score !== null) {
+              badge.textContent = `${Math.round(data.score)}/${Math.round(data.max_score)}`;
+          } else {
+              badge.textContent = data.verdict;
+          }
+      }
+
+      if (FINAL_VERDICTS.includes(data.verdict)) {
+        // Вердикт уже виден в таблице посылок — карточку снизу убираем
+        const card = document.getElementById(`status-${subId}`);
+        if (card) {
+          card.style.transition = 'opacity .3s';
+          card.style.opacity = '0';
+          setTimeout(() => card.remove(), 300);
+        }
+        break;
+      }
+    } catch { break; }
+  }
+}
+
+function addSubmissionRow(subId, subNum, lang) {
+  const tbody = document.getElementById('submissions-tbody');
+  const now   = new Date();
+  const pad   = n => String(n).padStart(2,'0');
+  const dateStr = `${pad(now.getDate())}.${pad(now.getMonth()+1)} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const tr = document.createElement('tr');
+  tr.id = `row-${subId}`;
+  tr.innerHTML = `
+    <td><a href="/submissions/${subId}" class="sub-link">#${subNum}</a></td>
+    <td><span class="badge badge--pending" id="verdict-${subId}">PENDING</span></td>
+    <td>${lang}</td>
+    <td id="test-${subId}">—</td>
+    <td id="time-${subId}">—</td>
+    <td class="sub-date">${dateStr}</td>
+  `;
+  tbody.insertBefore(tr, tbody.firstChild);
+}
+
+function updateSubmissionRow(subId, data) {
+  const badge = document.getElementById(`verdict-${subId}`);
+  if (badge) {
+    if (data.scoring_type && data.scoring_type !== 'icpc' && data.score !== null && data.score !== undefined) {
+      badge.className   = `badge ${VERDICT_CLASSES[data.verdict]||''}`;
+      badge.textContent = `${Math.round(data.score)}/${Math.round(data.max_score || 0)}`;
+    } else {
+      badge.className   = `badge ${VERDICT_CLASSES[data.verdict]||''}`;
+      badge.textContent = data.verdict;
+    }
+  }
+  const t  = document.getElementById(`test-${subId}`);
+  if (t)  t.textContent  = data.failed_test || '—';
+  const tm = document.getElementById(`time-${subId}`);
+  if (tm) tm.textContent = data.execution_time ? data.execution_time.toFixed(2)+'с' : '—';
+}
+
+// ── Универсальная функция копирования ─────────────────────────────────
+function copyText(text, btn) {
+  const finish = () => {
+    btn.classList.add('copied');
+    setTimeout(() => { btn.classList.remove('copied'); }, 2000);
+  };
+  
+  const legacyCopy = (str) => {
+    const ta = document.createElement('textarea');
+    ta.value = str;
+    ta.style.position = 'absolute';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    finish();
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(finish).catch(() => legacyCopy(text));
+  } else {
+    legacyCopy(text);
+  }
+}
+
+function makeCopyBtn(getText) {
+  const btn = document.createElement('button');
+  btn.className   = 'copy-btn';
+  btn.setAttribute('aria-label', 'Скопировать код');
+  btn.innerHTML = `
+    <span class="copy-btn-inner-text">Скопировать</span>
+    <span class="copy-btn-inner-icon">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" fill="currentColor">
+        <path fill-rule="evenodd" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"></path>
+      </svg>
+    </span>
+  `;
+  btn.onclick = (e) => { e.stopPropagation(); copyText(getText(), btn); };
+  return btn;
+}
+
+// Навешиваем кнопки на pre
+document.querySelectorAll('.statement pre').forEach(pre => {
+  const source = pre.querySelector('code') || pre;
+  // Считываем текст ДО добавления кнопки
+  const textToCopy = source.innerText.trim();
+  pre.appendChild(makeCopyBtn(() => textToCopy));
+});
+
+// Навешиваем кнопки на таблицы примеров
+document.querySelectorAll('.statement table').forEach(table => {
+  const headers = [...table.querySelectorAll('th')].map(th => th.textContent.toLowerCase());
+  const isLimitsTable = headers.some(h => h.includes('время') || h.includes('памят') || h.includes('memory') || h.includes('time'));
+  if (isLimitsTable) return;
+
+  const isExampleTable = headers.some(h => h.includes('ввод') || h.includes('вывод') || h.includes('input') || h.includes('output'));
+  if (!isExampleTable) return;
+
+  table.classList.add('example-table');
+  table.querySelectorAll('td').forEach(td => {
+    // Считываем текст ДО добавления кнопки
+    const textToCopy = td.innerText.trim();
+    td.appendChild(makeCopyBtn(() => textToCopy));
+  });
+});
+</script>
+{% endblock %}

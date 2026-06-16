@@ -1,0 +1,24 @@
+push 0
+push 20
+push 40
+push 60
+push 80
+push 100
+push 120
+push 140
+push 160
+push 180
+clear
+size
+push 0
+push 1
+push 2
+push 3
+push 4
+front
+pop
+pop
+pop
+pop
+pop
+exit

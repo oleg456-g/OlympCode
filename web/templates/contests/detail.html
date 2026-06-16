@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ contest.title }} — OlympCode{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/contests/">Олимпиады</a>
+  <span>›</span>
+  <span>{{ contest.title }}</span>
+</div>
+
+<div class="page-header">
+  <h1>{{ contest.title }}</h1>
+  {% if contest.year %}<p style="color:var(--text-3)">{{ contest.year }}</p>{% endif %}
+  {% if contest.description %}<p>{{ contest.description }}</p>{% endif %}
+</div>
+
+<div class="card">
+  <ul class="task-list">
+    {% for ct in contest_tasks %}
+    <li class="task-list__item">
+      <span class="task-num" style="font-size:15px; font-weight:700; color:var(--text-2)">
+        {{ ct.letter }}
+      </span>
+      <div>
+        <a href="/task/{{ ct.task_id }}?contest_id={{ contest.id }}" class="task-link">{{ ct.task.title }}</a>
+        <div style="font-size:12px; color:var(--text-3); margin-top:3px; font-family:var(--mono)">
+          {{ ct.task.time_limit }}с / {{ ct.task.memory_limit }}МБ
+          {% if ct.task.scoring_type.value != 'icpc' %}
+            · max {{ ct.task.max_score | int }} баллов
+          {% endif %}
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px">
+        {% if user %}
+          {% set status = task_statuses.get(ct.task_id) %}
+          {% set score  = task_scores.get(ct.task_id) %}
+          {% if ct.task.scoring_type.value == 'icpc' %}
+            {% if status %}
+              <span class="badge badge--{{ status | lower }}">{{ status }}</span>
+            {% endif %}
+          {% else %}
+            {% if score is not none %}
+              <span class="badge" style="background:var(--green-dim); color:var(--green)">
+                {{ score | int }}/{{ ct.task.max_score | int }}
+              </span>
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+    </li>
+    {% else %}
+    <li style="padding:20px; color:var(--text-2); text-align:center">
+      Задачи ещё не добавлены
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}

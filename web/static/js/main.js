@@ -1,0 +1,1 @@
+// OlympCode — основной JS
