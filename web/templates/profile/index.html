@@ -67,7 +67,7 @@
         <td>
           <span class="badge badge--{{ s.verdict.value.lower() }}">
             {% if s.task.scoring_type.value != 'icpc' and s.score is not none %}
-              {{ s.score | round | int }}/{{ s.task.max_score | round | int }}
+              {{ s.score | format_score }}/{{ s.task.max_score | format_score }}
             {% else %}
               {{ s.verdict.value }}
             {% endif %}

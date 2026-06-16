@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}{{ task.title }} — OlympCode{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+{% endblock %}
+
 {% block content %}
 <div class="breadcrumb">
   {% if contest %}
@@ -8,7 +12,7 @@
     <span>›</span>
     <a href="/contests/{{ contest.id }}">{{ contest.title }}</a>
     <span>›</span>
-    <span>{{ task.title }}</span>
+    <span>{% if contest_task.letter %}{{ contest_task.letter }}. {% endif %}{{ task.title }}</span>
   {% else %}
     <a href="/">Задачи</a>
     <span>›</span>
@@ -41,11 +45,11 @@
       <tbody id="submissions-tbody">
         {% for s in last_submissions %}
         <tr id="row-{{ s.id }}"{% if loop.index > 5 %} class="sub-extra sub-extra--hidden"{% endif %}>
-          <td><a href="/submissions/{{ s.id }}" class="sub-link">#{{ s.task_submission_number }}</a></td>
+          <td><a href="/submissions/{{ s.id }}{% if contest %}?contest_id={{ contest.id }}{% endif %}" class="sub-link">#{{ s.task_submission_number }}</a></td>
           <td>
             <span class="badge badge--{{ s.verdict.value.lower() }}" id="verdict-text-{{ s.id }}">
               {% if task.scoring_type.value != 'icpc' and s.score is not none %}
-                {{ s.score | round | int }}/{{ task.max_score | round | int }}
+                {{ s.score | format_score }}/{{ task.max_score | format_score }}
               {% else %}
                 {{ s.verdict.value }}
               {% endif %}
@@ -185,7 +189,7 @@
 
 /* Ячейки таблицы с примерами и блоки кода */
 .statement td { vertical-align: top; }
-.statement .example-table td { position: relative; padding-top: 38px; }
+.statement .example-table td { position: relative; }
 .statement pre { position: relative; padding-top: 42px !important; }
 
 /* ── ИСПРАВЛЕННАЯ КНОПКА КОПИРОВАНИЯ ── */
@@ -269,9 +273,12 @@
 </style>
 
 <script>
-const TASK_ID     = {{ task.id }};
-const STORAGE_KEY = `olymp_code_${TASK_ID}`;
-const LANG_KEY    = `olymp_lang_${TASK_ID}`;
+const TASK_ID       = {{ task.id }};
+const STORAGE_KEY   = `olymp_code_${TASK_ID}`;
+const LANG_KEY      = `olymp_lang_${TASK_ID}`;
+const SCORING_TYPE  = {{ task.scoring_type.value | tojson }};
+const MAX_SCORE     = {{ task.max_score | tojson }};
+const VISIBLE_SUBS  = 5;
 
 const templates = {
   cpp:    `#include <iostream>\nusing namespace std;\n\nint main() {\n    \n    return 0;\n}`,
@@ -337,7 +344,54 @@ document.getElementById('file-input')?.addEventListener('change', e => {
 
 // ── Свёртывание посылок ────────────────────────────────────────────────
 let subsVisible = true;
-let allSubsShown = false;
+let allSubsShown = {{ 'true' if last_submissions | length <= 5 else 'false' }};
+
+function formatScore(value) {
+  if (value === null || value === undefined) return '0';
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '0';
+  if (Math.abs(num - Math.round(num)) < 1e-9) return String(Math.round(num));
+  return num.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function formatVerdictText(data) {
+  if (SCORING_TYPE !== 'icpc' && data.score !== null && data.score !== undefined) {
+    const max = data.max_score ?? MAX_SCORE;
+    return `${formatScore(data.score)}/${formatScore(max)}`;
+  }
+  return data.verdict || data;
+}
+
+function refreshSubmissionsPagination() {
+  const rows = [...document.querySelectorAll('#submissions-tbody tr')];
+  rows.forEach((row, idx) => {
+    if (idx >= VISIBLE_SUBS) row.classList.add('sub-extra');
+    else row.classList.remove('sub-extra');
+    if (idx >= VISIBLE_SUBS && !allSubsShown) row.classList.add('sub-extra--hidden');
+    else row.classList.remove('sub-extra--hidden');
+  });
+
+  const section = document.getElementById('submissions-section');
+  if (section) section.style.display = rows.length ? '' : 'none';
+
+  let showBtn = document.getElementById('show-more-btn');
+  if (rows.length > VISIBLE_SUBS) {
+    if (!showBtn) {
+      showBtn = document.createElement('button');
+      showBtn.id = 'show-more-btn';
+      showBtn.className = 'btn btn--outline btn--full-width';
+      showBtn.onclick = showMoreSubs;
+      document.getElementById('subs-wrap').appendChild(showBtn);
+    }
+    showBtn.textContent = `Показать все (${rows.length})`;
+    showBtn.style.display = allSubsShown ? 'none' : '';
+  } else if (showBtn) {
+    showBtn.remove();
+  }
+
+  const hideBtn = document.getElementById('hide-extra-btn');
+  if (hideBtn) hideBtn.style.display = allSubsShown && rows.length > VISIBLE_SUBS ? '' : 'none';
+}
 
 function toggleSubs() {
   const wrap = document.getElementById('subs-wrap');
@@ -349,31 +403,58 @@ function toggleSubs() {
 }
 
 function showMoreSubs() {
-  document.querySelectorAll('.sub-extra').forEach(r => r.classList.remove('sub-extra--hidden'));
-  const showBtn = document.getElementById('show-more-btn');
-  if (showBtn) showBtn.style.display = 'none';
-
+  allSubsShown = true;
+  refreshSubmissionsPagination();
   let hideBtn = document.getElementById('hide-extra-btn');
   if (!hideBtn) {
     hideBtn = document.createElement('button');
-    hideBtn.id        = 'hide-extra-btn';
+    hideBtn.id = 'hide-extra-btn';
     hideBtn.className = 'btn btn--outline btn--full-width';
-    hideBtn.textContent   = 'Показать последние 5';
+    hideBtn.textContent = `Показать последние ${VISIBLE_SUBS}`;
     hideBtn.onclick = hideExtraSubs;
     document.getElementById('subs-wrap').appendChild(hideBtn);
   }
   hideBtn.style.display = '';
-  allSubsShown = true;
 }
 
 function hideExtraSubs() {
-  document.querySelectorAll('.sub-extra').forEach(r => r.classList.add('sub-extra--hidden'));
-  const showBtn = document.getElementById('show-more-btn');
-  if (showBtn) showBtn.style.display = '';
-  const hideBtn = document.getElementById('hide-extra-btn');
-  if (hideBtn) hideBtn.style.display = 'none';
   allSubsShown = false;
+  refreshSubmissionsPagination();
 }
+
+async function loadRecentSubmissions() {
+  try {
+    const res  = await fetch(`/submissions/task/${TASK_ID}/recent`);
+    const subs = await res.json();
+    if (!Array.isArray(subs)) return;
+
+    const tbody = document.getElementById('submissions-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    subs.forEach(s => {
+      const tr = document.createElement('tr');
+      tr.id = `row-${s.id}`;
+      tr.innerHTML = `
+        <td><a href="/submissions/${s.id}" class="sub-link">#${s.task_submission_number}</a></td>
+        <td><span class="badge badge--${s.verdict.toLowerCase()}" id="verdict-text-${s.id}">${formatVerdictText(s)}</span></td>
+        <td>${s.language}</td>
+        <td>${s.failed_test || '—'}</td>
+        <td>${s.execution_time ? s.execution_time.toFixed(2) + 'с' : '—'}</td>
+        <td class="sub-date">${s.submitted_at}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    refreshSubmissionsPagination();
+  } catch (err) {
+    console.warn('Не удалось загрузить посылки:', err);
+  }
+}
+
+window.addEventListener('pageshow', e => {
+  if (e.persisted) loadRecentSubmissions();
+});
 
 // ── Вердикты ───────────────────────────────────────────────────────────
 const FINAL_VERDICTS  = ['AC','WA','TLE','MLE','RE','CE'];
@@ -409,6 +490,7 @@ async function submitCode() {
   }
 
   addSubmissionRow(subId, subNum, langSelect.value);
+  refreshSubmissionsPagination();
 
   const statusesDiv = document.getElementById('submit-statuses');
   const card = document.createElement('div');
@@ -435,19 +517,6 @@ async function pollVerdict(subId, subNum) {
 
       updateSubmissionRow(subId, data);
 
-      const badge = document.getElementById(`verdict-text-${subId}`);
-      if (badge) {
-          // Обновляем цвет класса под новый вердикт
-          badge.className = `badge badge--${data.verdict.toLowerCase()}`;
-          
-          // Проверяем тип задачи, который возвращает /submissions/status/{id}
-          if (data.scoring_type !== 'icpc' && data.score !== null) {
-              badge.textContent = `${Math.round(data.score)}/${Math.round(data.max_score)}`;
-          } else {
-              badge.textContent = data.verdict;
-          }
-      }
-
       if (FINAL_VERDICTS.includes(data.verdict)) {
         // Вердикт уже виден в таблице посылок — карточку снизу убираем
         const card = document.getElementById(`status-${subId}`);
@@ -472,7 +541,7 @@ function addSubmissionRow(subId, subNum, lang) {
   tr.id = `row-${subId}`;
   tr.innerHTML = `
     <td><a href="/submissions/${subId}" class="sub-link">#${subNum}</a></td>
-    <td><span class="badge badge--pending" id="verdict-${subId}">PENDING</span></td>
+    <td><span class="badge badge--pending" id="verdict-text-${subId}">PENDING</span></td>
     <td>${lang}</td>
     <td id="test-${subId}">—</td>
     <td id="time-${subId}">—</td>
@@ -482,15 +551,10 @@ function addSubmissionRow(subId, subNum, lang) {
 }
 
 function updateSubmissionRow(subId, data) {
-  const badge = document.getElementById(`verdict-${subId}`);
+  const badge = document.getElementById(`verdict-text-${subId}`);
   if (badge) {
-    if (data.scoring_type && data.scoring_type !== 'icpc' && data.score !== null && data.score !== undefined) {
-      badge.className   = `badge ${VERDICT_CLASSES[data.verdict]||''}`;
-      badge.textContent = `${Math.round(data.score)}/${Math.round(data.max_score || 0)}`;
-    } else {
-      badge.className   = `badge ${VERDICT_CLASSES[data.verdict]||''}`;
-      badge.textContent = data.verdict;
-    }
+    badge.className = `badge ${VERDICT_CLASSES[data.verdict]||''}`;
+    badge.textContent = formatVerdictText(data);
   }
   const t  = document.getElementById(`test-${subId}`);
   if (t)  t.textContent  = data.failed_test || '—';
@@ -540,28 +604,19 @@ function makeCopyBtn(getText) {
   return btn;
 }
 
-// Навешиваем кнопки на pre
+// Кнопка копирования — только на <pre>, не на родительский <td> (иначе двойная кнопка)
 document.querySelectorAll('.statement pre').forEach(pre => {
+  if (pre.querySelector('.copy-btn')) return;
   const source = pre.querySelector('code') || pre;
-  // Считываем текст ДО добавления кнопки
   const textToCopy = source.innerText.trim();
+  pre.style.position = 'relative';
   pre.appendChild(makeCopyBtn(() => textToCopy));
 });
 
-// Навешиваем кнопки на таблицы примеров
-document.querySelectorAll('.statement table').forEach(table => {
-  const headers = [...table.querySelectorAll('th')].map(th => th.textContent.toLowerCase());
-  const isLimitsTable = headers.some(h => h.includes('время') || h.includes('памят') || h.includes('memory') || h.includes('time'));
-  if (isLimitsTable) return;
-
-  const isExampleTable = headers.some(h => h.includes('ввод') || h.includes('вывод') || h.includes('input') || h.includes('output'));
-  if (!isExampleTable) return;
-
+document.querySelectorAll('.statement table.sample-tests, .statement table.example-table').forEach(table => {
   table.classList.add('example-table');
   table.querySelectorAll('td').forEach(td => {
-    // Считываем текст ДО добавления кнопки
-    const textToCopy = td.innerText.trim();
-    td.appendChild(makeCopyBtn(() => textToCopy));
+    td.style.position = 'relative';
   });
 });
 </script>

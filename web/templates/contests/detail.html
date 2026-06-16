@@ -26,7 +26,7 @@
         <div style="font-size:12px; color:var(--text-3); margin-top:3px; font-family:var(--mono)">
           {{ ct.task.time_limit }}с / {{ ct.task.memory_limit }}МБ
           {% if ct.task.scoring_type.value != 'icpc' %}
-            · max {{ ct.task.max_score | int }} баллов
+            · max {{ ct.task.max_score | format_score }} баллов
           {% endif %}
         </div>
       </div>
@@ -41,7 +41,7 @@
           {% else %}
             {% if score is not none %}
               <span class="badge" style="background:var(--green-dim); color:var(--green)">
-                {{ score | int }}/{{ ct.task.max_score | int }}
+                {{ score | format_score }}/{{ ct.task.max_score | format_score }}
               </span>
             {% endif %}
           {% endif %}

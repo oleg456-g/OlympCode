@@ -1,18 +1,21 @@
 from fastapi import APIRouter, Request, Depends
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Submission, Verdict, Task, ScoringType
-from routers.auth import require_user
+from routers.auth import get_current_user
+from routers.utils import templates
 
 router = APIRouter(prefix="/profile", tags=["profile"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/")
 async def profile(request: Request, limit: int = 10, db: Session = Depends(get_db)):
-    user = require_user(request, db)
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/auth/login", status_code=302)
+
 
     # 1. ГЛОБАЛЬНАЯ СТАТИСТИКА (считает по всей истории, а не по лимиту)
     total_submissions = db.query(Submission).filter_by(user_id=user.id).count()

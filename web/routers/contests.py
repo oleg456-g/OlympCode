@@ -1,15 +1,13 @@
 from fastapi import APIRouter, Request, Depends
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Contest, ContestTask, Submission, Verdict
 from routers.auth import get_current_user
-from routers.utils import render_404
 import markdown as md
+from routers.utils import render_404, templates
 
 router = APIRouter(prefix="/contests", tags=["contests"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/")

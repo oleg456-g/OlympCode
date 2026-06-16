@@ -79,7 +79,7 @@ def _compile_cpp(code: str, tmpdir: str) -> tuple[str, str | None]:
     with open(src, "w", encoding="utf-8") as f:
         f.write(code)
     result = subprocess.run(
-        ["g++", "-O2", "-std=c++17", "-o", exe, src],
+        ["g++", "-O2", "-std=c++20", "-o", exe, src],
         capture_output=True, text=True, timeout=30
     )
     if result.returncode != 0:
@@ -117,6 +117,8 @@ def _run_ioi_tests(
         test_num = int(in_file.stem) if in_file.stem.isdigit() else 0
         # Балл за этот тест (индекс = test_num - 1, если нет — 0)
         test_score = test_scores[test_num - 1] if 0 < test_num <= len(test_scores) else 0.0
+        if test_score <= 0:
+            continue
 
         with open(in_file, "r", encoding="utf-8") as f_in:
             start = time.perf_counter()

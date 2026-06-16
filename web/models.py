@@ -28,6 +28,12 @@ class ScoringType(str, enum.Enum):
     ICPC       = "icpc"
     IOI_SUM    = "ioi_sum"
     IOI_GROUPS = "ioi_groups"
+    MOSH       = "mosh"       # частичные баллы через quitp в чекере
+
+
+class ContestFormat(str, enum.Enum):
+    POLYGON = "polygon"
+    MOSH    = "mosh"
 
 
 class Topic(Base):
@@ -83,6 +89,7 @@ class Contest(Base):
     title:       Mapped[str]        = mapped_column(String(256))
     year:        Mapped[int | None] = mapped_column(Integer, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    format:      Mapped[ContestFormat] = mapped_column(SAEnum(ContestFormat), default=ContestFormat.POLYGON)
     created_at:  Mapped[datetime]   = mapped_column(DateTime, default=datetime.now())
 
     contest_tasks: Mapped[list["ContestTask"]] = relationship(back_populates="contest")
@@ -94,7 +101,7 @@ class ContestTask(Base):
     id:         Mapped[int] = mapped_column(Integer, primary_key=True)
     contest_id: Mapped[int] = mapped_column(ForeignKey("contests.id"))
     task_id:    Mapped[int] = mapped_column(ForeignKey("tasks.id"))
-    letter:     Mapped[str] = mapped_column(String(4))
+    letter:     Mapped[str] = mapped_column(String(8))
     order:      Mapped[int] = mapped_column(Integer, default=1)
 
     contest: Mapped["Contest"] = relationship(back_populates="contest_tasks")

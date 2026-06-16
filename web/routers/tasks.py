@@ -1,15 +1,44 @@
+import re
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, Request, Depends
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 import markdown as md
 
 from database import get_db
-from models import Topic, Task, Submission, Verdict
+from models import Topic, Task, Submission, Verdict, ScoringType, ContestTask
 from routers.auth import get_current_user
-from routers.utils import render_404
+from routers.utils import render_404, templates
 
 router = APIRouter(tags=["tasks"])
-templates = Jinja2Templates(directory="templates")
+
+_IMAGE_SRC_RE = re.compile(
+    r'src="([^"]+\.(?:png|jpg|jpeg|gif|svg|webp))"',
+    re.IGNORECASE,
+)
+
+
+def _rewrite_statement_assets(html: str, task: Task) -> str:
+    """Подставляет абсолютные URL для картинок рядом с problem.html."""
+    if not html or not task.tests_path:
+        return html
+
+    task_dir = Path(task.tests_path).parent
+    try:
+        parts = task_dir.resolve().parts
+        idx = parts.index("contests_data")
+        base = "/" + "/".join(parts[idx:])
+    except ValueError:
+        return html
+
+    def repl(match: re.Match) -> str:
+        src = match.group(1)
+        if src.startswith(("http://", "https://", "/")):
+            return match.group(0)
+        return f'src="{base}/{src}"'
+
+    return _IMAGE_SRC_RE.sub(repl, html)
 
 
 @router.get("/")
@@ -81,13 +110,35 @@ async def task_page(task_id: int, request: Request, contest_id: int | None = Non
     if not task:
         return render_404(request, user)
 
+    if task.scoring_type == ScoringType.MOSH and task.checker_path:
+        from mosh_judge import ensure_mosh_test_scores
+        test_scores = json.loads(task.test_scores_json) if task.test_scores_json else []
+        test_scores = ensure_mosh_test_scores(
+            task.checker_path,
+            task.tests_path,
+            test_scores,
+            task.statement_html,
+        )
+        if sum(test_scores) >= 0 and (
+            task.max_score != sum(test_scores)
+            or task.test_scores_json != json.dumps(test_scores)
+        ):
+            task.test_scores_json = json.dumps(test_scores)
+            task.max_score = sum(test_scores)
+            db.commit()
+
     contest = None
+    contest_task = None
     if contest_id:
         from models import Contest
         contest = db.query(Contest).filter_by(id=contest_id).first()
+        if contest:
+            contest_task = db.query(ContestTask).filter_by(
+                contest_id=contest_id, task_id=task_id
+            ).first()
 
     if task.statement_html:
-        statement_html = task.statement_html
+        statement_html = _rewrite_statement_assets(task.statement_html, task)
     elif task.statement_md:
         statement_html = md.markdown(
             task.statement_md,
@@ -112,4 +163,5 @@ async def task_page(task_id: int, request: Request, contest_id: int | None = Non
         "statement_html":   statement_html,
         "last_submissions": last_submissions,
         "contest": contest,
+        "contest_task": contest_task,
     })

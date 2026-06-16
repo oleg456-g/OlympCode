@@ -10,12 +10,14 @@
 
 <div class="page-header">
   <h1>{{ contest.title }}</h1>
-  <p>{{ contest.year or '' }} · <a href="/contests/{{ contest.id }}">Смотреть на сайте →</a></p>
+  <p>{{ contest.year or '' }}
+    {% if contest.format.value == 'mosh' %} · <span style="color:var(--blue)">МОШ</span>{% endif %}
+    · <a href="/contests/{{ contest.id }}">Смотреть на сайте →</a></p>
 </div>
 
 {% if request.query_params.get('ok') %}
 <div style="background:var(--green-dim); border:1px solid var(--green); border-radius:var(--radius); padding:10px 16px; margin-bottom:20px; color:var(--green); font-size:14px">
-  ✓ Задача «{{ request.query_params.get('ok') }}» успешно загружена
+  ✓ {{ request.query_params.get('ok') }}
 </div>
 {% endif %}
 
@@ -25,10 +27,61 @@
 </div>
 {% endif %}
 
+<!-- Редактирование олимпиады -->
+<div class="card" style="margin-bottom:24px">
+  <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Редактировать олимпиаду</h2>
+  <form method="post" action="/admin/contest/{{ contest.id }}/update">
+    <div class="form-group">
+      <label>Название</label>
+      <input class="form-input" name="title" required value="{{ contest.title }}">
+    </div>
+    <div style="display:grid; grid-template-columns:120px 1fr; gap:12px">
+      <div class="form-group">
+        <label>Год</label>
+        <input class="form-input" name="year" type="number" value="{{ contest.year or '' }}">
+      </div>
+      <div class="form-group">
+        <label>Описание</label>
+        <input class="form-input" name="description" value="{{ contest.description or '' }}">
+      </div>
+    </div>
+    <button class="btn btn--primary" type="submit">Сохранить</button>
+  </form>
+</div>
+
 <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start">
 
   <!-- Загрузка задачи -->
   <div class="card">
+    {% if contest.format.value == 'mosh' %}
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Загрузить задачи МОШ (ZIP)</h2>
+    <form method="post" action="/admin/contest/{{ contest.id }}/upload-mosh"
+          enctype="multipart/form-data">
+
+      <div class="form-group">
+        <label>ZIP-архив</label>
+        <input class="form-input" type="file" name="file" accept=".zip" required style="padding:6px">
+        <div style="font-size:11px; color:var(--text-3); margin-top:4px">
+          Архив контеста (A1, B2, …) — импортируются все задачи сразу.<br>
+          Или одна задача — укажите букву ниже.
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:80px 1fr; gap:12px">
+        <div class="form-group">
+          <label>Буква</label>
+          <input class="form-input" name="letter" placeholder="A1" maxlength="8"
+                 style="text-transform:uppercase">
+        </div>
+        <div class="form-group">
+          <label>Название <span style="color:var(--text-3); font-weight:400">(необяз.)</span></label>
+          <input class="form-input" name="task_name" placeholder="Из meta.json если пусто">
+        </div>
+      </div>
+
+      <button class="btn btn--primary" type="submit" style="width:100%">Загрузить →</button>
+    </form>
+    {% else %}
     <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Загрузить задачу (Polygon ZIP)</h2>
     <form method="post" action="/admin/contest/{{ contest.id }}/upload"
           enctype="multipart/form-data">
@@ -39,11 +92,11 @@
       </div>
 
       <div class="form-group">
-        <label>Название задачи</label>
-        <input class="form-input" name="task_name" required
+        <label>Название задачи <span style="color:var(--text-3); font-weight:400">(необязательно)</span></label>
+        <input class="form-input" name="task_name"
                placeholder="Очередь в столовую">
         <div style="font-size:11px; color:var(--text-3); margin-top:4px">
-          Если в архиве есть problem.xml с именем — оно приоритетнее
+          Если не указать — возьмётся название из problem.xml архива
         </div>
       </div>
 
@@ -65,6 +118,7 @@
 
       <button class="btn btn--primary" type="submit" style="width:100%">Загрузить →</button>
     </form>
+    {% endif %}
   </div>
 
   <!-- Текущие задачи -->
@@ -73,33 +127,101 @@
       Задачи ({{ contest_tasks | length }})
     </h2>
     {% if contest_tasks %}
-    <ul class="task-list">
-      {% for ct in contest_tasks %}
-      <li class="task-list__item">
-        <span class="task-num" style="font-size:16px; font-weight:700; color:var(--blue)">
-          {{ ct.letter }}
-        </span>
-        <div>
-          <a href="/task/{{ ct.task.id }}" class="task-link">{{ ct.task.title }}</a>
-          <div style="font-size:11px; color:var(--text-3); font-family:var(--mono); margin-top:2px">
-            {{ ct.task.time_limit }}с / {{ ct.task.memory_limit }}МБ ·
-            {{ ct.task.scoring_type.value }}
-            {% if ct.task.max_score %} · {{ ct.task.max_score | int }} баллов{% endif %}
+    <form method="post" action="/admin/contest/{{ contest.id }}/reorder" id="reorder-form">
+      <input type="hidden" name="order" id="order-input">
+      <ul class="task-list" id="task-reorder-list">
+        {% for ct in contest_tasks %}
+        <li class="task-list__item" data-ct-id="{{ ct.id }}">
+          <span class="task-num" style="font-size:16px; font-weight:700; color:var(--blue); min-width:24px">
+            {{ ct.letter }}
+          </span>
+          <div style="flex:1">
+            <a href="/task/{{ ct.task.id }}?contest_id={{ contest.id }}" class="task-link">{{ ct.task.title }}</a>
+            <div style="font-size:11px; color:var(--text-3); font-family:var(--mono); margin-top:2px">
+              {{ ct.task.time_limit }}с / {{ ct.task.memory_limit }}МБ ·
+              {{ ct.task.scoring_type.value }}
+              {% if ct.task.max_score %} · {{ ct.task.max_score | float }} баллов{% endif %}
+            </div>
           </div>
-        </div>
-        <form method="post" action="/admin/contest/{{ contest.id }}/remove/{{ ct.id }}">
-          <button class="btn btn--outline"
-                  style="font-size:12px; padding:3px 10px; color:var(--red); border-color:var(--red-dim)">
-            Удалить
-          </button>
-        </form>
-      </li>
-      {% endfor %}
-    </ul>
+          <div style="display:flex; gap:4px; align-items:center">
+            <button type="button" class="btn btn--outline btn-reorder" data-dir="up"
+                    style="font-size:12px; padding:2px 8px" title="Выше">↑</button>
+            <button type="button" class="btn btn--outline btn-reorder" data-dir="down"
+                    style="font-size:12px; padding:2px 8px" title="Ниже">↓</button>
+            <button type="button" class="btn btn--outline btn-delete-task"
+                    data-action="/admin/contest/{{ contest.id }}/delete/{{ ct.id }}"
+                    style="font-size:12px; padding:3px 10px; color:var(--red); border-color:var(--red-dim)">
+              Удалить
+            </button>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      <button class="btn btn--outline" type="submit" style="width:100%; margin-top:12px; font-size:13px">
+        Сохранить порядок задач
+      </button>
+    </form>
     {% else %}
     <p style="color:var(--text-2); font-size:14px">Задач пока нет — загрузи первую</p>
     {% endif %}
   </div>
 
 </div>
+<div class="card" style="margin-top:24px; border-color: var(--red-dim);">
+  <h2 style="font-size:15px; font-weight:600; margin-bottom:8px; color:var(--red)">
+    Опасная зона
+  </h2>
+  <p style="font-size:13px; color:var(--text-2); margin-bottom:16px;">
+    Удаление контеста приведёт к безвозвратному удалению всех его задач, 
+    файлов с жесткого диска и связанных посылок пользователей. Это действие нельзя отменить.
+  </p>
+  
+  <form method="post" action="/admin/contest/delete/{{ contest.id }}" 
+        onsubmit="return confirm('Вы абсолютно уверены, что хотите удалить контест «{{ contest.title }}»? Это действие нельзя отменить!')">
+    <button class="btn btn--danger" type="submit">Удалить контест навсегда</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.btn-reorder').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const li = btn.closest('li');
+    const list = document.getElementById('task-reorder-list');
+    if (!li || !list) return;
+    if (btn.dataset.dir === 'up' && li.previousElementSibling) {
+      list.insertBefore(li, li.previousElementSibling);
+    } else if (btn.dataset.dir === 'down' && li.nextElementSibling) {
+      list.insertBefore(li.nextElementSibling, li);
+    }
+    updateLetters();
+  });
+});
+
+function updateLetters() {
+  document.querySelectorAll('#task-reorder-list li').forEach((li, idx) => {
+    const letter = String.fromCharCode(65 + idx);
+    const span = li.querySelector('.task-num');
+    if (span) span.textContent = letter;
+  });
+}
+
+document.getElementById('reorder-form')?.addEventListener('submit', e => {
+  const ids = [...document.querySelectorAll('#task-reorder-list li')]
+    .map(li => li.dataset.ctId);
+  document.getElementById('order-input').value = ids.join(',');
+});
+
+document.querySelectorAll('.btn-delete-task').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!confirm('Удалить задачу полностью? Будут удалены файлы на диске и все посылки.')) return;
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = btn.dataset.action;
+    document.body.appendChild(form);
+    form.submit();
+  });
+});
+</script>
 {% endblock %}

@@ -287,6 +287,25 @@ a:hover { text-decoration: underline; }
 }
 .statement pre code { background: none; padding: 0; }
 
+/* KaTeX (МОШ): скрываем MathML-копию, иначе буквы дублируются */
+.statement .katex-mathml {
+  position: absolute;
+  clip: rect(1px, 1px, 1px, 1px);
+  padding: 0;
+  border: 0;
+  height: 1px;
+  width: 1px;
+  overflow: hidden;
+}
+.statement .katex { font-size: 1.05em; }
+.statement .katex-display { margin: 1em 0; overflow-x: auto; }
+.statement .katex .msupsub { text-align: left; }
+.statement .input-output-copier { display: none !important; }
+.statement .sample-tests pre,
+.statement table pre {
+  margin: 0;
+}
+
 /* Task meta */
 .task-meta {
   display: flex;

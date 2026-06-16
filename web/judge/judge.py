@@ -49,7 +49,7 @@ def _judge_cpp(code: str, tests_path: str, time_limit: float, tmpdir: str, check
 
     # Компиляция
     compile_result = subprocess.run(
-        ["g++", "-O2", "-std=c++17", "-o", exe, src],
+        ["g++", "-O2", "-std=c++20", "-o", exe, src],
         capture_output=True, text=True, timeout=30
     )
     if compile_result.returncode != 0:

@@ -1,0 +1,361 @@
+<!DOCTYPE html
+  SYSTEM "html">
+<div class="problem-statement"><div class="header"><h1 class="title">Уникальные подстроки - 1</h1><table><tr class="time-limit"><td class="property-title">Ограничение времени</td><td>5&nbsp;секунд</td></tr><tr class="memory-limit"><td class="property-title">Ограничение памяти</td><td>64&nbsp;Мб</td></tr><tr class="input-file"><td class="property-title">Ввод</td><td colspan="1">стандартный ввод или input.txt</td></tr><tr class="output-file"><td class="property-title">Вывод</td><td colspan="1">стандартный вывод или output.txt</td></tr></table></div><h2></h2><div class="legend"><p>В этой задаче на проверку необходимо сдать исходный код программы.</p> 
+<p>Вася программирует так интенсивно, что от его ударов по клавиатуре некоторые клавиши с буквами вывалились и не вставляются обратно&nbsp;— такие клавиши он складывал в особый ящик. Клавиатур Вася сломал немало, поэтому некоторые выпавшие клавиши могут встречаться в нескольких экземплярах.</p> 
+<p>Проводя весеннюю уборку, Вася наткнулся на ящик с клавишами и подсчитал, сколько раз встречается каждая клавиша. Теперь он хочет составить из этих клавиш одну строку и украсить ей интерьер своего кабинета. Вася считает, что чем больше различных подстрок длины <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        k
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       k
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span></span> (последовательностей подряд идущих символов длины <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        k
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       k
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span></span>) есть в этой строке, тем сильнее эта строка украсит интерьер. Помогите Васе с украшением.</p></div><h2>Формат ввода</h2><div class="input-specification"><p>В первой строке задается количество наборов входных данных <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        T
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       T
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span></span></span></span></span>. В этой задаче <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        T
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       T
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span></span></span></span></span> всегда равно 1.</p> 
+<p>В первой строке каждого описания набора дано два целых числа <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        m
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       m
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span></span> и <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        k
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       k
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span></span> (<span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mn>
+        1
+       </mn>
+       <mo>
+        ≤
+       </mo>
+       <mi>
+        m
+       </mi>
+       <mo>
+        ≤
+       </mo>
+       <mn>
+        3
+       </mn>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       1 \le m \le 3
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7804em;vertical-align:-0.136em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7719em;vertical-align:-0.136em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">3</span></span></span></span></span>, <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mn>
+        1
+       </mn>
+       <mo>
+        ≤
+       </mo>
+       <mi>
+        k
+       </mi>
+       <mo>
+        ≤
+       </mo>
+       <mn>
+        13
+       </mn>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       1 \le k \le 13
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7804em;vertical-align:-0.136em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8304em;vertical-align:-0.136em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">13</span></span></span></span></span>)&nbsp;— число различных типов клавиш и требуемая длина различных подстрок.</p> 
+<p>В следующих <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        m
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       m
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord mathnormal">m</span></span></span></span></span> строках описываются клавиши. Каждое описание состоит из маленькой английской буквы <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <msub>
+        <mi>
+         C
+        </mi>
+        <mi>
+         i
+        </mi>
+       </msub>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       C_i
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0715em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>, написанной на клавише, и числа <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <msub>
+        <mi>
+         T
+        </mi>
+        <mi>
+         i
+        </mi>
+       </msub>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       T_i
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.1389em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span>&nbsp;— количества таких клавиш. Гарантируется, что суммарное количество клавиш не превосходит <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mn>
+        16
+       </mn>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       16
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">16</span></span></span></span></span>.</p></div><h2>Формат вывода</h2><div class="output-specification"><p>Для каждого набора выведите строку, составленную из клавиш. Чем больше в ней различных подстрок длины <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        k
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       k
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span></span>&nbsp;— тем выше будет балл.</p></div><h2>Система оценивания</h2><div class="scoring"><p>Оценка за эту задачу — 50 баллов, тестирование проводится онлайн (после тура баллы за задачу не изменятся).</p> 
+<p>Каждый тестовый набор оценивается максимум в 5 баллов. Оценка за набор вычисляется по формуле <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mn>
+        5
+       </mn>
+       <mo>
+        ×
+       </mo>
+       <mo stretchy="false">
+        (
+       </mo>
+       <mfrac>
+        <mrow>
+         <mi>
+          U
+         </mi>
+         <mi>
+          s
+         </mi>
+         <mi>
+          e
+         </mi>
+         <mi>
+          r
+         </mi>
+         <mi>
+          A
+         </mi>
+         <mi>
+          n
+         </mi>
+         <mi>
+          s
+         </mi>
+        </mrow>
+        <mrow>
+         <mi>
+          B
+         </mi>
+         <mi>
+          e
+         </mi>
+         <mi>
+          s
+         </mi>
+         <mi>
+          t
+         </mi>
+         <mi>
+          A
+         </mi>
+         <mi>
+          n
+         </mi>
+         <mi>
+          s
+         </mi>
+        </mrow>
+       </mfrac>
+       <msup>
+        <mo stretchy="false">
+         )
+        </mo>
+        <mn>
+         5
+        </mn>
+       </msup>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       5\times (\frac{UserAns}{BestAns})^5
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">5</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.2173em;vertical-align:-0.345em;"></span><span class="mopen">(</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05017em;">B</span><span class="mord mathnormal mtight">es</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">A</span><span class="mord mathnormal mtight">n</span><span class="mord mathnormal mtight">s</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">U</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">ser</span><span class="mord mathnormal mtight">A</span><span class="mord mathnormal mtight">n</span><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">5</span></span></span></span></span></span></span></span></span></span></span></span>, где <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        B
+       </mi>
+       <mi>
+        e
+       </mi>
+       <mi>
+        s
+       </mi>
+       <mi>
+        t
+       </mi>
+       <mi>
+        A
+       </mi>
+       <mi>
+        n
+       </mi>
+       <mi>
+        s
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       BestAns
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="mord mathnormal">es</span><span class="mord mathnormal">t</span><span class="mord mathnormal">A</span><span class="mord mathnormal">n</span><span class="mord mathnormal">s</span></span></span></span></span>&nbsp;— максимальное количество различных подстрок длины <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        k
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       k
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span></span> среди решений всех участников и жюри, а <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        U
+       </mi>
+       <mi>
+        s
+       </mi>
+       <mi>
+        e
+       </mi>
+       <mi>
+        r
+       </mi>
+       <mi>
+        A
+       </mi>
+       <mi>
+        n
+       </mi>
+       <mi>
+        s
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       UserAns
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">U</span><span class="mord mathnormal" style="margin-right:0.02778em;">ser</span><span class="mord mathnormal">A</span><span class="mord mathnormal">n</span><span class="mord mathnormal">s</span></span></span></span></span>&nbsp;— оличество различных подстрок длины <span class="math inline"><span class="katex"><span class="katex-mathml">
+    <math xmlns="http://www.w3.org/1998/Math/MathML">
+     <semantics>
+      <mrow>
+       <mi>
+        k
+       </mi>
+      </mrow>
+      <annotation encoding="application/x-tex">
+       k
+      </annotation>
+     </semantics>
+    </math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span></span> в решении участника.</p></div><h2>Пример</h2><table class="sample-tests"><thead><tr><th>Ввод</th><th>Вывод</th></tr></thead><tbody><tr><td><pre>1
+2 2
+a 2
+b 2
+</pre></td><td><pre>aabb
+</pre></td></tr></tbody></table></div>

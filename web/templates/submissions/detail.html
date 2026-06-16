@@ -3,12 +3,21 @@
 
 {% block content %}
 <div class="breadcrumb">
-  <a href="/">Задачи</a>
-  <span>›</span>
-  <a href="/topic/{{ task.topic.slug }}">{{ task.topic.title }}</a>
-  <span>›</span>
-  <a href="/task/{{ task.id }}">{{ task.title }}</a>
-  <span>›</span>
+  {% if contest %}
+    <a href="/contests/">Олимпиады</a>
+    <span>›</span>  
+    <a href="/contests/{{ contest.id }}">{{ contest.title }}</a>
+    <span>›</span>
+    <a href="/task/{{ task.id }}?contest_id={{ contest.id }}">{{ task.title }}</a>
+    <span>›</span>
+  {% else %}
+    <a href="/">Задачи</a>
+    <span>›</span>
+    <a href="/topic/{{ task.topic.slug }}">{{ task.topic.title }}</a>
+    <span>›</span>
+    <a href="/task/{{ task.id }}">{{ task.title }}</a>
+    <span>›</span>
+  {% endif %}
   <span>Посылка #{{ sub.id }}</span>
 </div>
 
@@ -17,7 +26,7 @@
   <div class="verdict-header">
     <span class="verdict-badge badge badge--{{ sub.verdict.value.lower() }}" id="verdict-badge">
       {% if task.scoring_type.value != 'icpc' and sub.score is not none %}
-        {{ sub.score | round | int }}/{{ task.max_score | round | int }}
+        {{ sub.score | format_score }}/{{ task.max_score | format_score }}
       {% else %}
         {{ sub.verdict.value }}
       {% endif %}
@@ -84,7 +93,7 @@
             </td>
             <td>{{ "%.3f"|format(test.execution_time) if test.execution_time else "—" }} с</td>
             {% if task.scoring_type.value != 'icpc' %}
-            <td>{{ test.score | round | int }}</td>
+            <td>{{ test.score | format_score }}</td>
             {% endif %}
           </tr>
           {% endfor %}
