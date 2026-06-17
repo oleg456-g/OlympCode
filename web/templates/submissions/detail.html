@@ -46,7 +46,11 @@
     <table style="width:100%; font-size:13px; border-collapse:collapse">
       <tr>
         <td style="padding:8px 0; color:var(--text-3); width:140px">Задача</td>
-        <td><a href="/task/{{ task.id }}">{{ task.title }}</a></td>
+        {% if contest %}
+          <td><a href="/task/{{ task.id }}?contest_id={{ contest.id }}">{{ task.title }}</a></td>
+        {% else %}     
+          <td><a href="/task/{{ task.id }}">{{ task.title }}</a></td>
+        {% endif %}
       </tr>
       <tr>
         <td style="padding:8px 0; color:var(--text-3)">Язык</td>
