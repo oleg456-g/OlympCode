@@ -55,8 +55,7 @@
   <div class="card">
     {% if contest.format.value == 'mosh' %}
     <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Загрузить задачи МОШ (ZIP)</h2>
-    <form method="post" action="/admin/contest/{{ contest.id }}/upload-mosh"
-          enctype="multipart/form-data">
+    <form id="upload-form-mosh" enctype="multipart/form-data">
 
       <div class="form-group">
         <label>ZIP-архив</label>
@@ -79,47 +78,56 @@
         </div>
       </div>
 
-      <button class="btn btn--primary" type="submit" style="width:100%">Загрузить →</button>
+      <button class="btn btn--primary" type="submit" style="width:100%" id="upload-btn-mosh">
+        Загрузить →
+      </button>
     </form>
     {% else %}
-    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Загрузить задачу (Polygon ZIP)</h2>
-    <form method="post" action="/admin/contest/{{ contest.id }}/upload"
-          enctype="multipart/form-data">
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Загрузить задачи Polygon (ZIP)</h2>
+    <form id="upload-form-polygon" enctype="multipart/form-data">
 
       <div class="form-group">
-        <label>ZIP-архив задачи</label>
+        <label>ZIP-архив</label>
         <input class="form-input" type="file" name="file" accept=".zip" required style="padding:6px">
+        <div style="font-size:11px; color:var(--text-3); margin-top:4px">
+          Архив контеста — импортируются все задачи сразу (буквы назначат автоматически).<br>
+          Или одна задача — укажите букву ниже.
+        </div>
       </div>
 
       <div class="form-group">
-        <label>Название задачи <span style="color:var(--text-3); font-weight:400">(необязательно)</span></label>
-        <input class="form-input" name="task_name"
-               placeholder="Очередь в столовую">
-        <div style="font-size:11px; color:var(--text-3); margin-top:4px">
-          Если не указать — возьмётся название из problem.xml архива
-        </div>
+        <label>Тип проверки</label>
+        <select class="lang-select" name="scoring_type" style="width:100%; padding:9px 12px">
+          <option value="icpc">ICPC (AC/WA)</option>
+          <option value="ioi_sum">IOI — сумма за тесты</option>
+          <option value="ioi_groups">IOI — по подзадачам</option>
+        </select>
       </div>
 
       <div style="display:grid; grid-template-columns:80px 1fr; gap:12px">
         <div class="form-group">
           <label>Буква</label>
-          <input class="form-input" name="letter" required placeholder="A" maxlength="2"
+          <input class="form-input" name="letter" placeholder="A" maxlength="2"
                  style="text-transform:uppercase">
+          <div style="font-size:10px; color:var(--text-3); margin-top:2px">Для одной задачи</div>
         </div>
         <div class="form-group">
-          <label>Тип проверки</label>
-          <select class="lang-select" name="scoring_type" style="width:100%; padding:9px 12px">
-            <option value="icpc">ICPC (AC/WA)</option>
-            <option value="ioi_sum">IOI — сумма за тесты</option>
-            <option value="ioi_groups">IOI — по подзадачам</option>
-          </select>
+          <label>Название <span style="color:var(--text-3); font-weight:400">(необяз.)</span></label>
+          <input class="form-input" name="task_name" placeholder="Из problem.xml если пусто">
         </div>
       </div>
 
-      <button class="btn btn--primary" type="submit" style="width:100%">Загрузить →</button>
+      <button class="btn btn--primary" type="submit" style="width:100%" id="upload-btn-polygon">
+        Загрузить →
+      </button>
     </form>
     {% endif %}
-  </div>
+  <div id="import-progress-area" style="margin-top:16px; display:none">
+  <div style="font-size:13px; font-weight:600; color:var(--text-2); margin-bottom:8px">Импорт задач</div>
+  <div id="import-jobs-list"></div>
+</div>
+
+</div>
 
   <!-- Текущие задачи -->
   <div class="card">
@@ -185,6 +193,10 @@
 
 {% block scripts %}
 <script>
+const CONTEST_ID = {{ contest.id }};
+
+// ── Reorder & delete (существующий код) ──────────────────────────────────────
+
 document.querySelectorAll('.btn-reorder').forEach(btn => {
   btn.addEventListener('click', () => {
     const li = btn.closest('li');
@@ -223,5 +235,193 @@ document.querySelectorAll('.btn-delete-task').forEach(btn => {
     form.submit();
   });
 });
+
+// ── Асинхронная загрузка задач с прогресс-баром ──────────────────────────────
+
+let _refreshInterval = null;
+
+function startPeriodicTasksRefresh() {
+  if (_refreshInterval) return;
+  _refreshInterval = setInterval(refreshTasksList, 2500);
+}
+
+function stopPeriodicTasksRefresh() {
+  if (_refreshInterval) { clearInterval(_refreshInterval); _refreshInterval = null; }
+}
+
+async function refreshTasksList() {
+  try {
+    const res = await fetch(location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    // Простой способ: перезагружаем блок задач парсингом HTML
+    const html = await res.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const newList = doc.getElementById('task-reorder-list');
+    const curList = document.getElementById('task-reorder-list');
+    if (newList && curList) {
+      curList.innerHTML = newList.innerHTML;
+      // Восстанавливаем обработчики
+      attachTaskListHandlers();
+    }
+    // Обновляем счётчик задач
+    const h2 = doc.querySelector('.card h2');
+    if (h2 && h2.textContent.includes('Задачи')) {
+      document.querySelectorAll('.card h2').forEach(el => {
+        if (el.textContent.includes('Задачи')) el.textContent = h2.textContent;
+      });
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function attachTaskListHandlers() {
+  document.querySelectorAll('.btn-reorder').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const li = btn.closest('li');
+      const list = document.getElementById('task-reorder-list');
+      if (!li || !list) return;
+      if (btn.dataset.dir === 'up' && li.previousElementSibling)
+        list.insertBefore(li, li.previousElementSibling);
+      else if (btn.dataset.dir === 'down' && li.nextElementSibling)
+        list.insertBefore(li.nextElementSibling, li);
+      updateLetters();
+    });
+  });
+  document.querySelectorAll('.btn-delete-task').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Удалить задачу полностью?')) return;
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = btn.dataset.action;
+      document.body.appendChild(form);
+      form.submit();
+    });
+  });
+}
+
+// ── Рендеринг прогресс-карточки ───────────────────────────────────────────────
+
+function renderJobCard(job) {
+  const isDone  = job.status === 'done';
+  const isError = job.status === 'error';
+  const color   = isDone ? 'var(--green)' : isError ? 'var(--red)' : 'var(--blue)';
+  const pct     = job.progress || 0;
+
+  let subsHtml = '';
+  if (job.sub_jobs && job.sub_jobs.length > 0) {
+    subsHtml = job.sub_jobs.map(sj => {
+      const sc = sj.status === 'done' ? 'var(--green)' : sj.status === 'error' ? 'var(--red)' : 'var(--blue)';
+      return `<div style="margin-top:6px; font-size:12px; color:var(--text-2)">
+        <span style="color:${sc}">●</span>
+        <span style="font-family:var(--mono)">${sj.filename}</span>
+        — ${sj.message}
+        ${sj.status !== 'done' && sj.status !== 'error'
+          ? `<div style="height:3px;background:var(--border);border-radius:2px;margin-top:3px">
+               <div style="height:100%;width:${sj.progress||0}%;background:${sc};border-radius:2px;transition:width .3s"></div>
+             </div>`
+          : ''}
+      </div>`;
+    }).join('');
+  }
+
+  return `
+    <div style="background:var(--bg-card);border:1px solid ${isDone ? 'var(--green-dim)' : isError ? 'var(--red-dim)' : 'var(--border)'};
+                border-radius:var(--radius);padding:12px 16px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-family:var(--mono);font-size:13px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${job.filename}
+        </span>
+        <span style="font-size:12px;color:${color};font-weight:600;white-space:nowrap">${pct}%</span>
+      </div>
+      <div style="height:5px;background:var(--border);border-radius:3px;margin-bottom:8px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .4s ease"></div>
+      </div>
+      <div style="font-size:13px;color:var(--text-2)">${job.message}</div>
+      ${subsHtml}
+    </div>`;
+}
+
+// ── Подключение SSE для одного джоба ─────────────────────────────────────────
+
+let _activeJobs = 0;
+
+function listenJob(jobId) {
+  _activeJobs++;
+  startPeriodicTasksRefresh();
+
+  const area = document.getElementById('import-progress-area');
+  const list = document.getElementById('import-jobs-list');
+  area.style.display = '';
+
+  // Создаём карточку
+  const cardId = `job-card-${jobId}`;
+  const div = document.createElement('div');
+  div.id = cardId;
+  list.prepend(div);
+
+  const sse = new EventSource(`/admin/contest/${CONTEST_ID}/import-progress/${jobId}`);
+
+  sse.onmessage = (e) => {
+    const job = JSON.parse(e.data);
+    const card = document.getElementById(cardId);
+    if (card) card.innerHTML = renderJobCard(job);
+
+    if (job.status === 'done' || job.status === 'error') {
+      sse.close();
+      _activeJobs--;
+      if (_activeJobs <= 0) { _activeJobs = 0; stopPeriodicTasksRefresh(); }
+      setTimeout(refreshTasksList, 400);
+    }
+  };
+
+  sse.onerror = () => {
+    sse.close();
+    _activeJobs--;
+    if (_activeJobs <= 0) { _activeJobs = 0; stopPeriodicTasksRefresh(); }
+  };
+}
+
+// ── Перехват форм загрузки ────────────────────────────────────────────────────
+
+async function submitUploadForm(formId, endpoint, btnId) {
+  const form = document.getElementById(formId);
+  const btn  = document.getElementById(btnId);
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    btn.textContent = 'Загрузка...';
+
+    try {
+      const fd = new FormData(form);
+      const res = await fetch(endpoint, { method: 'POST', body: fd });
+      const data = await res.json();
+
+      if (data.error) {
+        alert('Ошибка: ' + data.error);
+      } else if (data.job_id) {
+        listenJob(data.job_id);
+        // Сбрасываем форму после успешного старта
+        form.reset();
+      }
+    } catch (err) {
+      alert('Ошибка сети: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Загрузить →';
+    }
+  });
+}
+
+submitUploadForm(
+  'upload-form-polygon',
+  `/admin/contest/${CONTEST_ID}/upload`,
+  'upload-btn-polygon'
+);
+submitUploadForm(
+  'upload-form-mosh',
+  `/admin/contest/${CONTEST_ID}/upload-mosh`,
+  'upload-btn-mosh'
+);
 </script>
 {% endblock %}

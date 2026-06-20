@@ -11,6 +11,7 @@ from routers.utils import render_404, templates
 from judge.judge import judge
 from ioi_judge import judge_ioi
 from mosh_judge import judge_mosh
+from interactive_judge import judge_interactive
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -35,18 +36,46 @@ def _run_judge(submission_id: int) -> None:
         sub.verdict = Verdict.RUNNING
         db.commit()
 
-        if task.scoring_type == ScoringType.MOSH:
+        if task.is_interactive and task.interactor_path:
+            # Интерактивный тестер — два процесса с relay
+            test_scores = json.loads(task.test_scores_json) if task.test_scores_json else []
+
+            result = judge_interactive(
+                code             = sub.code,
+                language         = sub.language,
+                tests_path       = task.tests_path,
+                time_limit       = task.time_limit,
+                memory_limit     = task.memory_limit,
+                interactor_path  = task.interactor_path,
+                checker_path     = task.checker_path,
+                test_scores      = test_scores,
+            )
+            sub.verdict        = result.verdict
+            sub.score          = result.score
+            sub.execution_time = result.execution_time
+            sub.error_output   = result.error_output
+            for t in result.tests:
+                db.add(TestResult(
+                    submission_id  = sub.id,
+                    test_number    = t.test_number,
+                    verdict        = t.verdict,
+                    execution_time = t.execution_time,
+                    score          = t.score,
+                ))
+
+        elif task.scoring_type == ScoringType.MOSH:
             # MOSH-тестер
             test_scores = json.loads(task.test_scores_json) if task.test_scores_json else []
 
             result = judge_mosh(
-                code         = sub.code,
-                language     = sub.language,
-                tests_path   = task.tests_path,
-                time_limit   = task.time_limit,
-                memory_limit = task.memory_limit,
-                checker_path = task.checker_path,
-                test_scores  = test_scores,
+                code           = sub.code,
+                language       = sub.language,
+                tests_path     = task.tests_path,
+                time_limit     = task.time_limit,
+                memory_limit   = task.memory_limit,
+                checker_path   = task.checker_path,
+                test_scores    = test_scores,
+                is_output_only = task.is_output_only,
             )
             sub.verdict        = result.verdict
             sub.score          = result.score

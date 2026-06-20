@@ -153,16 +153,43 @@ def _run_ioi_tests(
         total_score = sum(t.score for t in test_details)
 
     elif scoring_type == ScoringType.IOI_GROUPS and subtasks:
+        import json
+
+        # Первый проход: для каждой подзадачи определяем, пройдена ли она
+        # сама (все её тесты — AC), независимо от зависимостей. Нужно
+        # знать это для ВСЕХ подзадач заранее, потому что зависимости
+        # могут ссылаться на любую другую подзадачу, а порядок в списке
+        # subtasks не гарантированно совпадает с порядком зависимостей.
+        passed_by_number: dict[int, bool] = {}
+        tests_by_number: dict[int, list] = {}
+        for st in subtasks:
+            group_tests = [t for t in test_details if st.test_from <= t.test_number <= st.test_to]
+            tests_by_number[st.number] = group_tests
+            passed_by_number[st.number] = bool(group_tests) and all(
+                t.verdict == Verdict.AC for t in group_tests
+            )
+
+        # Второй проход: начисляем баллы только если подзадача сама
+        # пройдена И все подзадачи, от которых она зависит, тоже пройдены.
+        # Без этой проверки участник мог бы получить бонус за сложную
+        # подзадачу, не решив более простые, от которых она зависит —
+        # что не соответствует тому, как Polygon/IOI размечает группы.
         total_score = 0.0
         for st in subtasks:
-            # Все тесты подзадачи
-            group_tests = [t for t in test_details if st.test_from <= t.test_number <= st.test_to]
-            if group_tests and all(t.verdict == Verdict.AC for t in group_tests):
-                total_score += st.max_score
-                # Проставляем балл подзадачи равномерно (для отображения)
-                per_test = st.max_score / len(group_tests)
-                for t in group_tests:
-                    t.score = per_test
+            group_tests = tests_by_number[st.number]
+            if not passed_by_number[st.number]:
+                continue
+
+            depends_on = json.loads(st.depends_on_json) if st.depends_on_json else []
+            deps_satisfied = all(passed_by_number.get(dep_num, False) for dep_num in depends_on)
+            if not deps_satisfied:
+                continue
+
+            total_score += st.max_score
+            # Проставляем балл подзадачи равномерно (для отображения)
+            per_test = st.max_score / len(group_tests)
+            for t in group_tests:
+                t.score = per_test
     else:
         total_score = sum(t.score for t in test_details)
 

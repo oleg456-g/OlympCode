@@ -96,6 +96,8 @@ def _run_tests(
     python_bin = "python" if os.name == "nt" else "python3"
     cmd = [exe] if exe else [python_bin, py_src]
     elapsed_time = 0.0
+    test_num = 0  # инициализируем до цикла — return после цикла не упадёт
+                  # если все тесты пропущены (нет .ans/.out файлов)
     for in_file in in_files:
         # У большинства платформ эталонный ответ — это *.ans или *.out. 
         # Проверим оба варианта, чтобы не падать
@@ -170,6 +172,9 @@ def _run_tests(
             if not _compare(actual, expected):
                 return JudgeResult(Verdict.WA, failed_test=test_num, execution_time=elapsed_time)
 
+    if test_num == 0:
+        # Ни один тест не был прогнан (нет .ans/.out файлов)
+        return JudgeResult(Verdict.RE, error_output="Не найдено тестов с эталонными ответами (.ans/.out)")
     return JudgeResult(Verdict.AC, failed_test=test_num, execution_time=elapsed_time)
 
 

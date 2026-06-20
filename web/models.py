@@ -62,6 +62,9 @@ class Task(Base):
     scoring_type:     Mapped[ScoringType]  = mapped_column(SAEnum(ScoringType), default=ScoringType.ICPC)
     max_score:        Mapped[float]        = mapped_column(Float, default=0.0)
     test_scores_json: Mapped[str | None]   = mapped_column(Text, nullable=True)  # JSON список баллов за каждый тест
+    is_output_only:   Mapped[bool]         = mapped_column(Boolean, default=False)  # MOSH: участник сдаёт готовый файл-ответ, а не код
+    is_interactive:    Mapped[bool]        = mapped_column(Boolean, default=False)  # Polygon: есть interactor, программа общается с ним в реальном времени
+    interactor_path:   Mapped[str | None]  = mapped_column(String(512), nullable=True)  # путь к скомпилированному interactor (для отладки, судья пока не запускает)
 
     topic:         Mapped["Topic | None"]      = relationship(back_populates="tasks")
     submissions:   Mapped[list["Submission"]]  = relationship(back_populates="task")
@@ -72,12 +75,13 @@ class Task(Base):
 class Subtask(Base):
     __tablename__ = "subtasks"
 
-    id:        Mapped[int]   = mapped_column(Integer, primary_key=True)
-    task_id:   Mapped[int]   = mapped_column(ForeignKey("tasks.id"))
-    number:    Mapped[int]   = mapped_column(Integer)
-    max_score: Mapped[float] = mapped_column(Float)
-    test_from: Mapped[int]   = mapped_column(Integer)
-    test_to:   Mapped[int]   = mapped_column(Integer)
+    id:               Mapped[int]        = mapped_column(Integer, primary_key=True)
+    task_id:          Mapped[int]        = mapped_column(ForeignKey("tasks.id"))
+    number:           Mapped[int]        = mapped_column(Integer)
+    max_score:        Mapped[float]      = mapped_column(Float)
+    test_from:        Mapped[int]        = mapped_column(Integer)
+    test_to:          Mapped[int]        = mapped_column(Integer)
+    depends_on_json:  Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON-список номеров Subtask, которые должны быть пройдены первыми
 
     task: Mapped["Task"] = relationship(back_populates="subtasks")
 
@@ -90,7 +94,7 @@ class Contest(Base):
     year:        Mapped[int | None] = mapped_column(Integer, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     format:      Mapped[ContestFormat] = mapped_column(SAEnum(ContestFormat), default=ContestFormat.POLYGON)
-    created_at:  Mapped[datetime]   = mapped_column(DateTime, default=datetime.now())
+    created_at:  Mapped[datetime]   = mapped_column(DateTime, default=datetime.now)
 
     contest_tasks: Mapped[list["ContestTask"]] = relationship(back_populates="contest")
 
@@ -116,7 +120,7 @@ class User(Base):
     email:         Mapped[str]      = mapped_column(String(256), unique=True)
     password_hash: Mapped[str]      = mapped_column(String(256))
     is_admin:      Mapped[bool]     = mapped_column(Boolean, default=False)
-    created_at:    Mapped[datetime] = mapped_column(DateTime, default=datetime.now())
+    created_at:    Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     submissions: Mapped[list["Submission"]] = relationship(back_populates="user")
 
@@ -136,7 +140,7 @@ class Submission(Base):
     execution_time:         Mapped[float | None] = mapped_column(Float, nullable=True)
     score:                  Mapped[float | None] = mapped_column(Float, nullable=True)
     ai_hint:                Mapped[str | None]   = mapped_column(Text, nullable=True)
-    submitted_at:           Mapped[datetime]     = mapped_column(DateTime, default=datetime.now())
+    submitted_at:           Mapped[datetime]     = mapped_column(DateTime, default=datetime.now)
 
     user:         Mapped["User"]             = relationship(back_populates="submissions")
     task:         Mapped["Task"]             = relationship(back_populates="submissions")

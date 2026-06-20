@@ -63,8 +63,12 @@ def judge_mosh(
     memory_limit: int,
     checker_path: str,
     test_scores: list[float],
+    is_output_only: bool = False,
 ) -> MoshResult:
     max_score = sum(test_scores) if test_scores else 0.0
+
+    if is_output_only:
+        return _judge_output_only(code, tests_path, checker_path, test_scores)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         if language == "cpp":
@@ -82,6 +86,53 @@ def judge_mosh(
                               error_output=f"Язык не поддерживается: {language}")
 
         return _run_mosh_tests(cmd, tmpdir, tests_path, time_limit, checker_path, test_scores)
+
+
+def _judge_output_only(
+    code: str,
+    tests_path: str,
+    checker_path: str,
+    test_scores: list[float],
+) -> MoshResult:
+    """
+    Output-only задача: участник сдаёт готовый текст ответа вместо кода.
+    Программа не компилируется и не запускается — текст ответа подаётся
+    в checker напрямую как вывод участника. В MOSH такие задачи всегда
+    содержат ровно один тест.
+    """
+    max_score = sum(test_scores) if test_scores else 0.0
+
+    tests_dir = Path(tests_path)
+    if not tests_dir.exists():
+        return MoshResult(Verdict.RE, 0, max_score,
+                          error_output=f"Папка тестов не найдена: {tests_path}")
+
+    in_files = _list_input_files(tests_dir)
+    if not in_files:
+        return MoshResult(Verdict.RE, 0, max_score, error_output="Тесты не найдены")
+
+    in_file = in_files[0]
+    out_file = _answer_file(in_file)
+    if not out_file:
+        return MoshResult(Verdict.RE, 0, max_score, error_output="Эталонный ответ не найден")
+
+    test_num = int(in_file.stem) if in_file.stem.isdigit() else 1
+    test_max = test_scores[test_num - 1] if 0 < test_num <= len(test_scores) else max_score
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        team_out = os.path.join(tmpdir, "team.out")
+        with open(team_out, "w", encoding="utf-8") as f:
+            f.write(code)
+
+        earned, verdict = _run_checker(checker_path, in_file, team_out, out_file, test_max)
+
+    detail = MoshTestDetail(test_num, verdict, 0.0, earned, test_max)
+    return MoshResult(
+        verdict   = verdict,
+        score     = earned,
+        max_score = max_score,
+        tests     = [detail],
+    )
 
 
 def compute_test_max_scores(checker_path: str, all_tests: list[str], tests_path: str) -> list[float]:

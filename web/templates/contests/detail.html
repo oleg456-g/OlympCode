@@ -36,13 +36,28 @@
           {% set score  = task_scores.get(ct.task_id) %}
           {% if ct.task.scoring_type.value == 'icpc' %}
             {% if status %}
-              <span class="badge badge--{{ status | lower }}">{{ status }}</span>
+              {% if status == 'AC' %}
+                <span class="badge" style="background:var(--green-dim); color:var(--green); font-weight:700">✓ AC</span>
+              {% elif status in ('WA', 'RE', 'CE', 'MLE') %}
+                <span class="badge" style="background:var(--red-dim); color:var(--red)">{{ status }}</span>
+              {% elif status == 'TLE' %}
+                <span class="badge" style="background:var(--amber-dim); color:var(--amber)">TLE</span>
+              {% else %}
+                <span class="badge badge--{{ status | lower }}">{{ status }}</span>
+              {% endif %}
             {% endif %}
           {% else %}
             {% if score is not none %}
-              <span class="badge" style="background:var(--green-dim); color:var(--green)">
-                {{ score | format_score }}/{{ ct.task.max_score | format_score }}
-              </span>
+              {% set pct = (score / ct.task.max_score * 100) if ct.task.max_score else 0 %}
+              {% set hue = (pct * 1.2) | int %}
+              <span class="badge" style="
+                background: linear-gradient(135deg, hsl({{ hue }},65%,18%), hsl({{ hue }},65%,14%));
+                color: hsl({{ hue }}, 80%, 70%);
+                border: 1px solid hsl({{ hue }}, 50%, 30%);
+                font-weight: 600;
+              ">{{ score | format_score }}/{{ ct.task.max_score | format_score }}</span>
+            {% elif status %}
+              <span class="badge badge--{{ status | lower }}">{{ status }}</span>
             {% endif %}
           {% endif %}
         {% endif %}

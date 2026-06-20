@@ -25,7 +25,15 @@
 <div class="task-limits">
   <span class="limit-badge">⏱ {{ task.time_limit }} с</span>
   <span class="limit-badge">💾 {{ task.memory_limit }} МБ</span>
-  <span class="limit-badge">stdin / stdout</span>
+  {% if task.is_output_only %}
+    <span class="limit-badge">📄 только ответ</span>
+    <a href="/task/{{ task.id }}/download-input"
+       class="btn btn--outline btn--small"
+       style="margin-left:8px"
+       download>⬇ Скачать входные данные</a>
+  {% else %}
+    <span class="limit-badge">stdin / stdout</span>
+  {% endif %}
 </div>
 
 <div class="statement">
@@ -44,16 +52,23 @@
       </thead>
       <tbody id="submissions-tbody">
         {% for s in last_submissions %}
-        <tr id="row-{{ s.id }}"{% if loop.index > 5 %} class="sub-extra sub-extra--hidden"{% endif %}>
+        <tr id="row-{{ s.id }}"{% if loop.index > VISIBLE_SUBS %} class="sub-extra sub-extra--hidden"{% endif %}>
           <td><a href="/submissions/{{ s.id }}{% if contest %}?contest_id={{ contest.id }}{% endif %}" class="sub-link">#{{ s.task_submission_number }}</a></td>
           <td>
-            <span class="badge badge--{{ s.verdict.value.lower() }}" id="verdict-text-{{ s.id }}">
-              {% if task.scoring_type.value != 'icpc' and s.score is not none %}
-                {{ s.score | format_score }}/{{ task.max_score | format_score }}
-              {% else %}
+            {% if task.scoring_type.value != 'icpc' and s.score is not none %}
+              {% set pct = (s.score / task.max_score * 100) if task.max_score else 0 %}
+              {% set hue = (pct * 1.2) | int %}
+              <span class="badge" id="verdict-text-{{ s.id }}" style="
+                background: linear-gradient(135deg, hsl({{ hue }},65%,18%), hsl({{ hue }},65%,14%));
+                color: hsl({{ hue }}, 80%, 70%);
+                border: 1px solid hsl({{ hue }}, 50%, 30%);
+                font-weight: 600;
+              ">{{ s.score | format_score }}/{{ task.max_score | format_score }}</span>
+            {% else %}
+              <span class="badge badge--{{ s.verdict.value.lower() }}" id="verdict-text-{{ s.id }}">
                 {{ s.verdict.value }}
-              {% endif %}
-            </span>
+              </span>
+            {% endif %}
           </td>
           <td>{{ s.language }}</td>
           <td>{{ s.failed_test if s.failed_test else '—' }}</td>
@@ -63,26 +78,27 @@
         {% endfor %}
       </tbody>
     </table>
-    {% if last_submissions | length > 5 %}
-    <button class="btn btn--outline btn--full-width" id="show-more-btn" onclick="showMoreSubs()">
-      Показать все ({{ last_submissions | length }})
-    </button>
-    {% endif %}
   </div>
 </div>
 
 {% if user %}
 <div class="editor-section">
   <div class="editor-topbar">
-    <span class="section-label">РЕШЕНИЕ</span>
+    <span class="section-label">{{ 'ОТВЕТ' if task.is_output_only else 'РЕШЕНИЕ' }}</span>
     <div class="editor-actions">
-      <select class="lang-select" id="lang-select">
-        <option value="cpp">C++17</option>
-        <option value="python">Python 3</option>
-      </select>
+      {% if task.is_output_only %}
+        <select class="lang-select" id="lang-select" disabled>
+          <option value="text" selected>Нет компилятора</option>
+        </select>
+      {% else %}
+        <select class="lang-select" id="lang-select">
+          <option value="cpp">C++20</option>
+          <option value="python">Python 3</option>
+        </select>
+      {% endif %}
       <label class="file-upload-btn">
         📎 Загрузить файл
-        <input type="file" id="file-input" accept=".cpp,.py,.txt" style="display:none">
+        <input type="file" id="file-input" accept="{{ '.txt' if task.is_output_only else '.cpp,.py,.txt' }}" style="display:none">
       </label>
     </div>
   </div>
@@ -273,29 +289,32 @@
 </style>
 
 <script>
-const TASK_ID       = {{ task.id }};
-const STORAGE_KEY   = `olymp_code_${TASK_ID}`;
-const LANG_KEY      = `olymp_lang_${TASK_ID}`;
-const SCORING_TYPE  = {{ task.scoring_type.value | tojson }};
-const MAX_SCORE     = {{ task.max_score | tojson }};
-const VISIBLE_SUBS  = 5;
+const TASK_ID        = {{ task.id }};
+const CONTEST_ID     = {{ contest.id | tojson if contest else 'null' }};
+const STORAGE_KEY     = `olymp_code_${TASK_ID}`;
+const LANG_KEY        = `olymp_lang_${TASK_ID}`;
+const SCORING_TYPE    = {{ task.scoring_type.value | tojson }};
+const MAX_SCORE       = {{ task.max_score | tojson }};
+const VISIBLE_SUBS    = {{ VISIBLE_SUBS }};
+const IS_OUTPUT_ONLY  = {{ task.is_output_only | tojson }};
 
 const templates = {
   cpp:    `#include <iostream>\nusing namespace std;\n\nint main() {\n    \n    return 0;\n}`,
   python: `import sys\ninput = sys.stdin.readline\n\n`,
+  text:   ``,
 };
 
-const savedCode = localStorage.getItem(STORAGE_KEY) || templates.cpp;
-const savedLang = localStorage.getItem(LANG_KEY) || 'cpp';
-const cmModes   = { cpp: 'text/x-c++src', python: 'text/x-python' };
+const savedCode = localStorage.getItem(STORAGE_KEY) || (IS_OUTPUT_ONLY ? '' : templates.cpp);
+const savedLang = IS_OUTPUT_ONLY ? 'text' : (localStorage.getItem(LANG_KEY) || 'cpp');
+const cmModes   = { cpp: 'text/x-c++src', python: 'text/x-python', text: 'text/plain' };
 
 const editor = CodeMirror(document.getElementById('editor-container'), {
   value: savedCode,
   mode: cmModes[savedLang],
   theme: 'dracula',
   lineNumbers: true,
-  autoCloseBrackets: true,
-  matchBrackets: true,
+  autoCloseBrackets: !IS_OUTPUT_ONLY,
+  matchBrackets: !IS_OUTPUT_ONLY,
   indentUnit: 4,
   tabSize: 4,
   indentWithTabs: false,
@@ -303,7 +322,7 @@ const editor = CodeMirror(document.getElementById('editor-container'), {
 });
 
 const langSelect = document.getElementById('lang-select');
-if (langSelect) langSelect.value = savedLang;
+if (langSelect && !IS_OUTPUT_ONLY) langSelect.value = savedLang;
 
 const counter = document.getElementById('char-count');
 function updateCounter() {
@@ -317,6 +336,7 @@ editor.on('change', () => {
 });
 
 langSelect?.addEventListener('change', () => {
+  if (IS_OUTPUT_ONLY) return;
   const lang = langSelect.value;
   localStorage.setItem(LANG_KEY, lang);
   editor.setOption('mode', cmModes[lang]);
@@ -328,6 +348,7 @@ langSelect?.addEventListener('change', () => {
     updateCounter();
   }
 });
+
 
 document.getElementById('file-input')?.addEventListener('change', e => {
   const file = e.target.files[0];
@@ -344,7 +365,7 @@ document.getElementById('file-input')?.addEventListener('change', e => {
 
 // ── Свёртывание посылок ────────────────────────────────────────────────
 let subsVisible = true;
-let allSubsShown = {{ 'true' if last_submissions | length <= 5 else 'false' }};
+let allSubsShown = false;
 
 function formatScore(value) {
   if (value === null || value === undefined) return '0';
@@ -352,6 +373,17 @@ function formatScore(value) {
   if (!Number.isFinite(num)) return '0';
   if (Math.abs(num - Math.round(num)) < 1e-9) return String(Math.round(num));
   return num.toFixed(2).replace(/\.?0+$/, '');
+}
+
+function scoreGradientStyle(score, maxScore) {
+  const pct = maxScore > 0 ? Math.min(100, score / maxScore * 100) : 0;
+  const hue = Math.round(pct * 1.2);  // 0%=red(0°), 100%=green(120°)
+  return [
+    `background:linear-gradient(135deg,hsl(${hue},65%,18%),hsl(${hue},65%,14%))`,
+    `color:hsl(${hue},80%,70%)`,
+    `border:1px solid hsl(${hue},50%,30%)`,
+    `font-weight:600`,
+  ].join(';');
 }
 
 function formatVerdictText(data) {
@@ -362,13 +394,32 @@ function formatVerdictText(data) {
   return data.verdict || data;
 }
 
+function verdictBadgeHtml(id, data) {
+  // Возвращает готовый <span> для вставки в ячейку
+  if (SCORING_TYPE !== 'icpc' && data.score !== null && data.score !== undefined) {
+    const max = data.max_score ?? MAX_SCORE;
+    const style = scoreGradientStyle(data.score, max);
+    return `<span class="badge" id="verdict-text-${id}" style="${style}">${formatScore(data.score)}/${formatScore(max)}</span>`;
+  }
+  const v = (data.verdict || 'PENDING').toUpperCase();
+  const cls = VERDICT_CLASSES[v] || '';
+  return `<span class="badge ${cls}" id="verdict-text-${id}">${v}</span>`;
+}
+
 function refreshSubmissionsPagination() {
   const rows = [...document.querySelectorAll('#submissions-tbody tr')];
+  
   rows.forEach((row, idx) => {
-    if (idx >= VISIBLE_SUBS) row.classList.add('sub-extra');
-    else row.classList.remove('sub-extra');
-    if (idx >= VISIBLE_SUBS && !allSubsShown) row.classList.add('sub-extra--hidden');
-    else row.classList.remove('sub-extra--hidden');
+    if (idx >= VISIBLE_SUBS) {
+      row.classList.add('sub-extra');
+      if (!allSubsShown) {
+        row.classList.add('sub-extra--hidden');
+      } else {
+        row.classList.remove('sub-extra--hidden');
+      }
+    } else {
+      row.classList.remove('sub-extra', 'sub-extra--hidden');
+    }
   });
 
   const section = document.getElementById('submissions-section');
@@ -381,16 +432,21 @@ function refreshSubmissionsPagination() {
       showBtn.id = 'show-more-btn';
       showBtn.className = 'btn btn--outline btn--full-width';
       showBtn.onclick = showMoreSubs;
-      document.getElementById('subs-wrap').appendChild(showBtn);
+      
+      const wrap = document.getElementById('subs-wrap');
+      if (wrap) wrap.appendChild(showBtn);
     }
     showBtn.textContent = `Показать все (${rows.length})`;
     showBtn.style.display = allSubsShown ? 'none' : '';
+
   } else if (showBtn) {
     showBtn.remove();
   }
 
   const hideBtn = document.getElementById('hide-extra-btn');
-  if (hideBtn) hideBtn.style.display = allSubsShown && rows.length > VISIBLE_SUBS ? '' : 'none';
+  if (hideBtn) {
+    hideBtn.style.display = allSubsShown && rows.length > VISIBLE_SUBS ? '' : 'none';
+  }
 }
 
 function toggleSubs() {
@@ -436,8 +492,8 @@ async function loadRecentSubmissions() {
       const tr = document.createElement('tr');
       tr.id = `row-${s.id}`;
       tr.innerHTML = `
-        <td><a href="/submissions/${s.id}" class="sub-link">#${s.task_submission_number}</a></td>
-        <td><span class="badge badge--${s.verdict.toLowerCase()}" id="verdict-text-${s.id}">${formatVerdictText(s)}</span></td>
+        <td><a href="/submissions/${s.id}${CONTEST_ID ? '?contest_id=' + CONTEST_ID : ''}" class="sub-link">#${s.task_submission_number}</a></td>
+        <td>${verdictBadgeHtml(s.id, s)}</td>
         <td>${s.language}</td>
         <td>${s.failed_test || '—'}</td>
         <td>${s.execution_time ? s.execution_time.toFixed(2) + 'с' : '—'}</td>
@@ -453,7 +509,7 @@ async function loadRecentSubmissions() {
 }
 
 window.addEventListener('pageshow', e => {
-  if (e.persisted) loadRecentSubmissions();
+  loadRecentSubmissions();
 });
 
 // ── Вердикты ───────────────────────────────────────────────────────────
@@ -471,11 +527,10 @@ async function submitCode() {
 
   const form = new FormData();
   form.append('code', editor.getValue());
-  form.append('language', langSelect.value);
+  form.append('language', IS_OUTPUT_ONLY ? 'text' : langSelect.value);
 
   const section = document.getElementById('submissions-section');
   section.style.display = '';
-  if (!subsVisible) toggleSubs();
 
   let subId, subNum;
   try {
@@ -489,7 +544,7 @@ async function submitCode() {
     return;
   }
 
-  addSubmissionRow(subId, subNum, langSelect.value);
+  addSubmissionRow(subId, subNum, IS_OUTPUT_ONLY ? 'text' : langSelect.value);
   refreshSubmissionsPagination();
 
   const statusesDiv = document.getElementById('submit-statuses');
@@ -540,8 +595,8 @@ function addSubmissionRow(subId, subNum, lang) {
   const tr = document.createElement('tr');
   tr.id = `row-${subId}`;
   tr.innerHTML = `
-    <td><a href="/submissions/${subId}" class="sub-link">#${subNum}</a></td>
-    <td><span class="badge badge--pending" id="verdict-text-${subId}">PENDING</span></td>
+    <td><a href="/submissions/${subId}${CONTEST_ID ? '?contest_id=' + CONTEST_ID : ''}" class="sub-link">#${subNum}</a></td>
+    <td>${verdictBadgeHtml(subId, {verdict:'PENDING', score:null})}</td>
     <td>${lang}</td>
     <td id="test-${subId}">—</td>
     <td id="time-${subId}">—</td>
@@ -551,11 +606,8 @@ function addSubmissionRow(subId, subNum, lang) {
 }
 
 function updateSubmissionRow(subId, data) {
-  const badge = document.getElementById(`verdict-text-${subId}`);
-  if (badge) {
-    badge.className = `badge ${VERDICT_CLASSES[data.verdict]||''}`;
-    badge.textContent = formatVerdictText(data);
-  }
+  const cell = document.getElementById(`verdict-text-${subId}`)?.parentElement;
+  if (cell) cell.innerHTML = verdictBadgeHtml(subId, data);
   const t  = document.getElementById(`test-${subId}`);
   if (t)  t.textContent  = data.failed_test || '—';
   const tm = document.getElementById(`time-${subId}`);

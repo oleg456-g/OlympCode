@@ -1,0 +1,351 @@
+<style>
+.problem-statement {
+    margin: 0.5em auto 2em auto;
+    font-family: verdana,serif;
+    line-height: 1.5em;
+    font-size: 14px;
+    max-width: 1024px;
+}
+
+.problem-statement .epigraph {
+    margin-left: 67%;
+    width: 33%;
+}
+
+.problem-statement .epigraph-text {
+}
+
+.problem-statement .epigraph-source {
+    border-top: 1px solid #888;
+    text-align: right;
+}
+
+.problem-statement .lstlisting {
+    padding: 0.5em;
+    
+}
+
+.problem-statement .tex-tabular {
+    margin: 1em 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.problem-statement .tex-tabular td {
+    padding: 0.15em 0.7em;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-left {
+    border-left: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-right {
+    border-right: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-top {
+    border-top: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-left {
+    text-align: left;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-center {
+    text-align: center;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-right {
+    text-align: right;
+}
+
+.problem-statement p {
+    margin: 0 0 1em 0;
+}
+
+.problem-statement p a, .problem-statement ul a, .problem-statement ol a, .problem-statement td a {
+    margin: 0;
+}
+
+.problem-statement .header {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    margin-bottom: 0.25em;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    font-family: arial, serif;
+}
+
+.problem-statement ul {
+    list-style: disc outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement ol {
+    list-style: decimal outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement li {
+    line-height: 1.5em;
+    margin-left: 3em;
+}
+
+.problem-statement .property-title {
+    display: inline;
+}
+
+.problem-statement .property-title:after {
+    content: ": ";
+}
+
+.problem-statement .time-limit, .problem-statement .memory-limit, .problem-statement .input-file, .problem-statement .output-file {
+    margin: 0 auto;
+}
+
+.problem-statement .legend {
+    margin-bottom: 1em;
+}
+
+.problem-statement .tutorial {
+    margin-bottom: 1em;
+}
+
+.problem-statement .section-title {
+    font-family: arial, serif;
+    font-size: 115%;
+    font-weight: bold;
+}
+
+.problem-statement .input-specification,
+    .problem-statement .output-specification,
+    .problem-statement .sample-tests,
+    .problem-statement .author,
+    .problem-statement .resource,
+    .problem-statement .date {
+    /*margin-bottom: 1em;*/
+}
+
+.problem-statement .output-specification {
+    margin-bottom: 1em;
+}
+
+.problem-statement .sample-tests .sample-test {
+}
+
+.problem-statement .sample-tests .input, .problem-statement .sample-tests .output {
+    border: 1px solid #888;
+}
+
+.problem-statement .sample-tests .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.problem-statement .sample-tests pre {
+    line-height: 1.25em;
+    padding: 0.25em;
+    margin: 0;
+    
+}
+
+.problem-statement .sample-tests .title {
+    font-family: arial, serif;
+    padding: 0.25em;
+    border-bottom: 1px solid #888;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+.problem-statement .tex-formula {
+    vertical-align: middle;
+    margin: 0;
+    border:medium none;
+    position: relative;
+    bottom: 2px;
+}
+
+.problem-statement .tex-span {
+    font-size: 125%;
+    font-family: times new roman, serif;
+    white-space: nowrap;
+}
+
+.problem-statement .tex-font-size-tiny {
+    font-size: 70%;
+}
+
+.problem-statement .tex-font-size-script {
+    font-size: 75%;
+}
+
+.problem-statement .tex-font-size-footnotes {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-small {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-normal {
+    font-size: 100%;
+}
+
+.problem-statement .tex-font-size-large-1 {
+    font-size: 115%;
+}
+
+.problem-statement .tex-font-size-large-2 {
+    font-size: 130%;
+}
+
+.problem-statement .tex-font-size-large-3 {
+    font-size: 145%;
+}
+
+.problem-statement .tex-font-size-huge-1 {
+    font-size: 175%;
+}
+
+.problem-statement .tex-font-size-huge-2 {
+    font-size: 200%;
+}
+
+.problem-statement .tex-font-style-rm {
+}
+
+.problem-statement .tex-font-style-striked {
+    text-decoration: line-through;
+}
+
+.problem-statement .tex-font-style-underline {
+    text-decoration: underline;
+}
+
+.problem-statement .tex-font-style-sf {
+    font-family: arial, serif;
+}
+
+.problem-statement .tex-font-style-tt {
+    font-size: 110%;
+    font-family: courier new, serif;
+}
+
+.problem-statement .tex-font-style-md {
+}
+
+.problem-statement .tex-font-style-bf {
+    font-weight: bold;
+}
+
+.problem-statement .tex-font-style-up {
+}
+
+.problem-statement .tex-font-style-it {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sl {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sc {
+    text-transform: uppercase;
+}
+
+.problem-statement .tex-graphics {
+    max-width: 95%;
+    display: block;
+}
+
+.problem-statement .tex-tabular .tex-graphics {
+    max-width: 100%;
+}
+
+.problem-statement .input-output-copier {
+    font-size: 0.75rem;
+    float: right;
+    color: #888;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid rgb(185, 185, 185);
+    line-height: 0.8rem;
+    text-transform: none;
+}
+
+.problem-statement .input-output-copier:hover {
+    background-color: #def;
+}
+
+.problem-statement .test-example-line-even {
+    background-color: #E0E0E0;
+}
+
+.statement-footnote {
+    font-size: 85%;
+    position: relative;
+}
+
+.statement-footnote::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 25%;
+    border-top: 1px solid #888;
+}
+
+.statement-footnote p {
+    margin-bottom: 0.5em;
+}
+
+.statement-footnote p:last-child {
+    margin-bottom: 1em;
+}
+
+.problem-statement .header .input-standard,
+.problem-statement .header .output-standard {
+    display: none;
+}
+
+</style>
+<DIV class="problem-statement"><DIV class="header"><DIV class="title">Warfare 1917: Remastered</DIV><DIV class="time-limit"><DIV class="property-title">ограничение по времени на тест</DIV>2 секунды</DIV><DIV class="memory-limit"><DIV class="property-title">ограничение по памяти на тест</DIV>256 мегабайт</DIV><DIV class="input-file input-standard"><DIV class="property-title">ввод</DIV>стандартный ввод</DIV><DIV class="output-file output-standard"><DIV class="property-title">вывод</DIV>стандартный вывод</DIV></DIV><DIV class="legend"><P><SPAN class="tex-font-style-bf">Это интерактивная задача с открытыми тестами.</SPAN></P><P>Наконец-то выпустили долгожданный ремастер вашей любимой <SPAN class="tex-font-style-it">Flash</SPAN> игры <SPAN class="tex-font-style-it">Warfare 1917</SPAN>! Вы так долго его ждали, что отложили все свои дела и бросились играть. Работавшие над игрой креативные менеджеры решили, что предпочтения игроков за последние 17 лет сильно поменялись, поэтому многие игровые механики были упрощены. В то же время менеджеры постарались сохранить <SPAN class="tex-font-style-striked">бюджет</SPAN> дух оригинала, поэтому приняли решение переиспользовать старые графические ресурсы.</P><P>В игре сражаются два игрока, каждый имеет на руках карты со значениями от $$$1$$$ до $$$6$$$, соответствующие юнитам из оригинальной игры, и по <SPAN class="tex-font-style-bf">ноль</SPAN> <SPAN class="tex-font-style-it">очков</SPAN>. Карта с <SPAN class="tex-font-style-bf">большим</SPAN> значением бьёт карту с <SPAN class="tex-font-style-bf">меньшим</SPAN>. Игра проходит в шесть <SPAN class="tex-font-style-it">раундов</SPAN>, каждый <SPAN class="tex-font-style-it">раунд</SPAN> игроки одновременно выбирают и разыгрывают по карте. Если значения карт совпадают, ничего не происходит, в противном случае игрок с большим значением получает одно <SPAN class="tex-font-style-it">очко</SPAN>. Разыгранные карты переиспользовать нельзя. Если один из игроков набрал больше <SPAN class="tex-font-style-it">очков</SPAN>, чем другой, он объявляется победителем игры.</P><P>Вы будете сражаться с ботами, которые играют по следующим стратегиям: </P><OL> <LI> Каждая карта&nbsp;&mdash; минимальная в руке бота (в данный момент); </LI><LI> Каждая карта&nbsp;&mdash; максимальная в руке бота (в данный момент); </LI><LI> Первые три карты&nbsp;&mdash; $$$1, 2, 3$$$ (в случайном порядке), следующие три карты&nbsp;&mdash; $$$4, 5, 6$$$ (в случайном порядке); </LI><LI> Первые три карты&nbsp;&mdash; $$$4, 5, 6$$$ (в случайном порядке), следующие три карты&nbsp;&mdash; $$$1, 2, 3$$$ (в случайном порядке); </LI><LI> Каждая карта&nbsp;&mdash; случайная из <SPAN class="tex-font-style-bf">двух</SPAN> минимальных в руке бота (в данный момент); </LI><LI> Каждая карта&nbsp;&mdash; случайная из <SPAN class="tex-font-style-bf">двух</SPAN> максимальных в руке бота (в данный момент); </LI><LI> Каждая карта&nbsp;&mdash; случайная из <SPAN class="tex-font-style-bf">трёх</SPAN> минимальных в руке бота (в данный момент); </LI><LI> Каждая карта&nbsp;&mdash; случайная из <SPAN class="tex-font-style-bf">трёх</SPAN> максимальных в руке бота (в данный момент). </LI></OL><P></P><P>Каждый тест соответствует <SPAN class="tex-font-style-bf">одному</SPAN> боту, при этом порядок тестов соответствует порядку ботов в описании. В каждом тесте вы сыграете с ботом $$$500$$$ независимых игр. Ваша задача&nbsp;&mdash; выиграть у <SPAN class="tex-font-style-bf">каждого</SPAN> бота хотя бы $$$251$$$ игру. Ничья не считается за победу.</P><P>Обратите внимание, что боты <SPAN class="tex-font-style-bf">не меняют</SPAN> свою стратегию, но при этом <SPAN class="tex-font-style-it">случайность</SPAN> равномерно распределена и работает независимо для каждой игры. Например, третий бот может сыграть последовательность карт $$$1, 3, 2, 5, 6, 4$$$ в первой игре и $$$2, 3, 1, 4, 5, 6$$$ во второй.</P></DIV><P></P><P></P><DIV class="interaction"><DIV class="section-title">Протокол взаимодействия</DIV><P></P><P>Вы сыграете с каждым ботом $$$500$$$ раз.</P><P>Каждая игра проходит в $$$6$$$ <SPAN class="tex-font-style-it">раундов</SPAN>. Каждый <SPAN class="tex-font-style-it">раунд</SPAN> вы должны сначала вывести значение карты, которой хотите сходить, а затем считать значение карты бота.</P><P>После окончания игры начинается следующая, и вы играете её в таком же формате, пока не сыграете $$$500$$$ игр. Вы должны доигрывать все <SPAN class="tex-font-style-it">раунды</SPAN> и все игры, нельзя завершить программу, если вы уже набрали достаточное количество очков.</P><P>Если ваша программа нарушит протокол взаимодействия, сделает некорректный ход или зависнет, вы можете получить случайный вердикт ошибки.</P><P>Не забывайте сбрасывать буфер после <SPAN class="tex-font-style-bf">каждого</SPAN> вывода. Для этого можете использовать <SPAN class="tex-font-style-tt">std::endl</SPAN> в <SPAN class="tex-font-style-tt">C++</SPAN> или стандартную функцию <SPAN class="tex-font-style-tt">print</SPAN> в <SPAN class="tex-font-style-tt">Python</SPAN>. Не используйте <SPAN class="tex-font-style-tt">ios_base::sync_with_stdio(false)</SPAN> в <SPAN class="tex-font-style-tt">C++</SPAN>.</P><P>Интерактор <SPAN class="tex-font-style-bf">не является</SPAN> адаптивным, то есть ходы ботов зафиксированы заранее и <SPAN class="tex-font-style-bf">не зависят</SPAN> от ваших действий.</P></DIV><P></P><P></P><DIV class="sample-tests"><DIV class="section-title">Пример</DIV><P></P><P></P><DIV class="sample-test"><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content">
+
+1
+
+2
+
+3
+
+4
+
+5
+
+6
+
+...
+</PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+4
+
+2
+
+1
+
+5
+
+6
+
+3
+
+...
+</PRE></DIV></DIV></DIV><P></P><P></P><DIV class="note"><DIV class="section-title">Примечание</DIV><P></P><P>В примере показано взаимодействие программы участника с первым ботом. В нём сыграна одна игра, в которой участник набрал $$$3$$$ <SPAN class="tex-font-style-it">очка</SPAN>, а бот&nbsp;&mdash; $$$2$$$ <SPAN class="tex-font-style-it">очка</SPAN>. Эту игру выиграл участник, далее ему предстоит сыграть ещё $$$499$$$ игр с этим же ботом.</P></DIV></DIV><P></P><P>  </P>

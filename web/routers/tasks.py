@@ -2,7 +2,8 @@ import re
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 import markdown as md
 
@@ -17,7 +18,7 @@ _IMAGE_SRC_RE = re.compile(
     r'src="([^"]+\.(?:png|jpg|jpeg|gif|svg|webp))"',
     re.IGNORECASE,
 )
-
+VISIBLE_SUBS = 5
 
 def _rewrite_statement_assets(html: str, task: Task) -> str:
     """Подставляет абсолютные URL для картинок рядом с problem.html."""
@@ -111,14 +112,7 @@ async def task_page(task_id: int, request: Request, contest_id: int | None = Non
         return render_404(request, user)
 
     if task.scoring_type == ScoringType.MOSH and task.checker_path:
-        from mosh_judge import ensure_mosh_test_scores
         test_scores = json.loads(task.test_scores_json) if task.test_scores_json else []
-        test_scores = ensure_mosh_test_scores(
-            task.checker_path,
-            task.tests_path,
-            test_scores,
-            task.statement_html,
-        )
         if sum(test_scores) >= 0 and (
             task.max_score != sum(test_scores)
             or task.test_scores_json != json.dumps(test_scores)
@@ -164,4 +158,33 @@ async def task_page(task_id: int, request: Request, contest_id: int | None = Non
         "last_submissions": last_submissions,
         "contest": contest,
         "contest_task": contest_task,
+        "VISIBLE_SUBS": VISIBLE_SUBS,
     })
+
+
+@router.get("/task/{task_id}/download-input")
+async def download_task_input(task_id: int, db: Session = Depends(get_db)):
+    """
+    Отдаёт входные данные для output-only задачи (MOSH).
+    Такие задачи всегда содержат ровно один тест.
+    """
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task or not task.is_output_only:
+        raise HTTPException(status_code=404, detail="Задача не найдена")
+
+    tests_dir = Path(task.tests_path)
+    if not tests_dir.exists():
+        raise HTTPException(status_code=404, detail="Тесты не найдены")
+
+    candidates = sorted(
+        [f for f in tests_dir.iterdir() if f.is_file() and not f.name.endswith((".a", ".out", ".ans"))]
+    )
+    if not candidates:
+        raise HTTPException(status_code=404, detail="Входной файл не найден")
+
+    in_file = candidates[0]
+    return FileResponse(
+        in_file,
+        filename=f"input_{task_id}.txt",
+        media_type="text/plain",
+    )

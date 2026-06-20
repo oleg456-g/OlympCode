@@ -4,13 +4,14 @@
 - Загрузка Polygon ZIP и привязка к олимпиаде
 """
 
+import asyncio
 import os
 import shutil
 import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Request, Form, UploadFile, File, Depends
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -18,6 +19,7 @@ from database import get_db
 from models import Contest, ContestTask, Task, Submission, TestResult, Subtask, ContestFormat
 from routers.auth import get_current_user
 from polygon_importer import import_polygon_zip, CONTESTS_DATA_DIR
+import import_worker
 from mosh_importer import import_mosh_contest_zip, import_mosh_task_zip
 from routers.utils import render_404, templates
 
@@ -184,7 +186,7 @@ async def upload_task(
     request:      Request,
     file:         UploadFile = File(...),
     task_name:    str        = Form(default=""),
-    letter:       str        = Form(...),
+    letter:       str        = Form(default=""),
     scoring_type: str        = Form(default="icpc"),
     db: Session              = Depends(get_db),
 ):
@@ -203,21 +205,15 @@ async def upload_task(
         tmp.write(await file.read())
         tmp_path = tmp.name
 
-    try:
-        task = import_polygon_zip(
-            zip_path      = tmp_path,
-            contest_id    = contest_id,
-            letter        = letter,
-            task_name     = task_name.strip(),
-            scoring_type  = scoring_type,
-            subtasks_def  = None,
-            db            = db,
-        )
-        return RedirectResponse(f"/admin/contest/{contest_id}?ok={task.title}", status_code=303)
-    except Exception as e:
-        return RedirectResponse(f"/admin/contest/{contest_id}?error={str(e)[:200]}", status_code=303)
-    finally:
-        os.unlink(tmp_path)
+    job = import_worker.start_polygon_import(
+        tmp_path     = tmp_path,
+        contest_id   = contest_id,
+        letter       = letter.strip(),
+        task_name    = task_name.strip(),
+        scoring_type = scoring_type,
+        filename     = file.filename,
+    )
+    return JSONResponse({"job_id": job.job_id})
 
 
 @router.post("/contest/{contest_id}/upload-mosh")
@@ -244,26 +240,59 @@ async def upload_mosh(
         tmp.write(await file.read())
         tmp_path = tmp.name
 
-    try:
-        if letter.strip():
-            task = import_mosh_task_zip(
-                zip_path   = tmp_path,
-                contest_id = contest_id,
-                letter     = letter.strip(),
-                task_name  = task_name.strip(),
-                db         = db,
-            )
-            return RedirectResponse(f"/admin/contest/{contest_id}?ok={task.title}", status_code=303)
+    job = import_worker.start_mosh_import(
+        tmp_path   = tmp_path,
+        contest_id = contest_id,
+        letter     = letter.strip(),
+        task_name  = task_name.strip(),
+        filename   = file.filename,
+    )
+    return JSONResponse({"job_id": job.job_id})
 
-        tasks = import_mosh_contest_zip(tmp_path, contest_id, db)
-        return RedirectResponse(
-            f"/admin/contest/{contest_id}?ok=Импортировано+{len(tasks)}+задач",
-            status_code=303,
-        )
-    except Exception as e:
-        return RedirectResponse(f"/admin/contest/{contest_id}?error={str(e)[:200]}", status_code=303)
-    finally:
-        os.unlink(tmp_path)
+
+# ── SSE: прогресс импорта ────────────────────────────────────────────────────
+
+@router.get("/contest/{contest_id}/import-progress/{job_id}")
+async def import_progress_sse(contest_id: int, job_id: str, request: Request):
+    """SSE-стрим прогресса импорта. Шлёт обновления каждые 300мс до завершения."""
+    import json as _json
+
+    async def event_stream():
+        while True:
+            if await request.is_disconnected():
+                break
+
+            job = import_worker.get_job(job_id)
+            if job is None:
+                yield f"data: {_json.dumps({'status': 'error', 'message': 'Джоб не найден'})}\n\n"
+                break
+
+            yield f"data: {_json.dumps(job.to_dict())}\n\n"
+
+            if job.status in (import_worker.JobStatus.DONE, import_worker.JobStatus.ERROR):
+                break
+
+            await asyncio.sleep(0.3)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.get("/contest/{contest_id}/import-jobs")
+async def import_jobs(contest_id: int, request: Request, db: Session = Depends(get_db)):
+    """Возвращает список активных джобов для контеста (для восстановления состояния при перезагрузке)."""
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "Нет доступа"}, status_code=403)
+
+    jobs = import_worker.get_contest_jobs(contest_id)
+    return JSONResponse([j.to_dict() for j in jobs])
 
 
 # ── Полное удаление задачи ────────────────────────────────────────────────────
@@ -376,4 +405,3 @@ async def delete_contest(
     db.commit()
 
     return RedirectResponse(f"/admin/?ok=Контест+удален", status_code=303)
-

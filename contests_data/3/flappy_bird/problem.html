@@ -1,0 +1,359 @@
+<style>
+.problem-statement {
+    margin: 0.5em auto 2em auto;
+    font-family: verdana,serif;
+    line-height: 1.5em;
+    font-size: 14px;
+    max-width: 1024px;
+}
+
+.problem-statement .epigraph {
+    margin-left: 67%;
+    width: 33%;
+}
+
+.problem-statement .epigraph-text {
+}
+
+.problem-statement .epigraph-source {
+    border-top: 1px solid #888;
+    text-align: right;
+}
+
+.problem-statement .lstlisting {
+    padding: 0.5em;
+    
+}
+
+.problem-statement .tex-tabular {
+    margin: 1em 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.problem-statement .tex-tabular td {
+    padding: 0.15em 0.7em;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-left {
+    border-left: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-right {
+    border-right: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-top {
+    border-top: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-left {
+    text-align: left;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-center {
+    text-align: center;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-right {
+    text-align: right;
+}
+
+.problem-statement p {
+    margin: 0 0 1em 0;
+}
+
+.problem-statement p a, .problem-statement ul a, .problem-statement ol a, .problem-statement td a {
+    margin: 0;
+}
+
+.problem-statement .header {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    margin-bottom: 0.25em;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    font-family: arial, serif;
+}
+
+.problem-statement ul {
+    list-style: disc outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement ol {
+    list-style: decimal outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement li {
+    line-height: 1.5em;
+    margin-left: 3em;
+}
+
+.problem-statement .property-title {
+    display: inline;
+}
+
+.problem-statement .property-title:after {
+    content: ": ";
+}
+
+.problem-statement .time-limit, .problem-statement .memory-limit, .problem-statement .input-file, .problem-statement .output-file {
+    margin: 0 auto;
+}
+
+.problem-statement .legend {
+    margin-bottom: 1em;
+}
+
+.problem-statement .tutorial {
+    margin-bottom: 1em;
+}
+
+.problem-statement .section-title {
+    font-family: arial, serif;
+    font-size: 115%;
+    font-weight: bold;
+}
+
+.problem-statement .input-specification,
+    .problem-statement .output-specification,
+    .problem-statement .sample-tests,
+    .problem-statement .author,
+    .problem-statement .resource,
+    .problem-statement .date {
+    /*margin-bottom: 1em;*/
+}
+
+.problem-statement .output-specification {
+    margin-bottom: 1em;
+}
+
+.problem-statement .sample-tests .sample-test {
+}
+
+.problem-statement .sample-tests .input, .problem-statement .sample-tests .output {
+    border: 1px solid #888;
+}
+
+.problem-statement .sample-tests .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.problem-statement .sample-tests pre {
+    line-height: 1.25em;
+    padding: 0.25em;
+    margin: 0;
+    
+}
+
+.problem-statement .sample-tests .title {
+    font-family: arial, serif;
+    padding: 0.25em;
+    border-bottom: 1px solid #888;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+.problem-statement .tex-formula {
+    vertical-align: middle;
+    margin: 0;
+    border:medium none;
+    position: relative;
+    bottom: 2px;
+}
+
+.problem-statement .tex-span {
+    font-size: 125%;
+    font-family: times new roman, serif;
+    white-space: nowrap;
+}
+
+.problem-statement .tex-font-size-tiny {
+    font-size: 70%;
+}
+
+.problem-statement .tex-font-size-script {
+    font-size: 75%;
+}
+
+.problem-statement .tex-font-size-footnotes {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-small {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-normal {
+    font-size: 100%;
+}
+
+.problem-statement .tex-font-size-large-1 {
+    font-size: 115%;
+}
+
+.problem-statement .tex-font-size-large-2 {
+    font-size: 130%;
+}
+
+.problem-statement .tex-font-size-large-3 {
+    font-size: 145%;
+}
+
+.problem-statement .tex-font-size-huge-1 {
+    font-size: 175%;
+}
+
+.problem-statement .tex-font-size-huge-2 {
+    font-size: 200%;
+}
+
+.problem-statement .tex-font-style-rm {
+}
+
+.problem-statement .tex-font-style-striked {
+    text-decoration: line-through;
+}
+
+.problem-statement .tex-font-style-underline {
+    text-decoration: underline;
+}
+
+.problem-statement .tex-font-style-sf {
+    font-family: arial, serif;
+}
+
+.problem-statement .tex-font-style-tt {
+    font-size: 110%;
+    font-family: courier new, serif;
+}
+
+.problem-statement .tex-font-style-md {
+}
+
+.problem-statement .tex-font-style-bf {
+    font-weight: bold;
+}
+
+.problem-statement .tex-font-style-up {
+}
+
+.problem-statement .tex-font-style-it {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sl {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sc {
+    text-transform: uppercase;
+}
+
+.problem-statement .tex-graphics {
+    max-width: 95%;
+    display: block;
+}
+
+.problem-statement .tex-tabular .tex-graphics {
+    max-width: 100%;
+}
+
+.problem-statement .input-output-copier {
+    font-size: 0.75rem;
+    float: right;
+    color: #888;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid rgb(185, 185, 185);
+    line-height: 0.8rem;
+    text-transform: none;
+}
+
+.problem-statement .input-output-copier:hover {
+    background-color: #def;
+}
+
+.problem-statement .test-example-line-even {
+    background-color: #E0E0E0;
+}
+
+.statement-footnote {
+    font-size: 85%;
+    position: relative;
+}
+
+.statement-footnote::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 25%;
+    border-top: 1px solid #888;
+}
+
+.statement-footnote p {
+    margin-bottom: 0.5em;
+}
+
+.statement-footnote p:last-child {
+    margin-bottom: 1em;
+}
+
+.problem-statement .header .input-standard,
+.problem-statement .header .output-standard {
+    display: none;
+}
+
+</style>
+<DIV class="problem-statement"><DIV class="header"><DIV class="title">Flappy Bird</DIV><DIV class="time-limit"><DIV class="property-title">ограничение по времени на тест</DIV>2 секунды</DIV><DIV class="memory-limit"><DIV class="property-title">ограничение по памяти на тест</DIV>256 мегабайт</DIV><DIV class="input-file input-standard"><DIV class="property-title">ввод</DIV>стандартный ввод</DIV><DIV class="output-file output-standard"><DIV class="property-title">вывод</DIV>стандартный вывод</DIV></DIV><DIV class="legend"><P>Антон играет в игру Flappy Bird. Антон играет за птичку, которой нужно пролететь по уровню слева-направо. Высота уровня равна $$$h$$$, то есть есть $$$h$$$ различных высот, на которых может находиться птичка. Высоты пронумерованы числами от $$$1$$$ до $$$h$$$ от самой низкой до самой высокой. Уровень состоит из $$$n$$$ столбцов, расположенных друг за другом слева направо, и пронумерованных числами от $$$1$$$ до $$$n$$$. В $$$i$$$-м столбце есть две трубы, одна расположена снизу, другая сверху. Нижняя труба занимает все высоты от $$$1$$$ до $$$l_i$$$ включительно, а верхняя занимает все высоты от $$$r_i$$$ до $$$h$$$ включительно. Это значит, что в $$$i$$$-м столбце птичка может находиться на высотах от $$$l_i + 1$$$ до $$$r_i - 1$$$ включительно.</P><P>Птичка летит следующим образом: изначально она находится в первом столбце на высоте $$$s$$$ ($$$l_1 &lt; s &lt; r_1$$$), а затем $$$n-1$$$ раз перемещается в следующий столбец. Перед перемещением в следующий столбец игрок может нажать кнопку прыжка, тогда птичка поднимется на $$$k$$$ вверх, т.е. если птичка в текущем столбце находилась на высоте $$$x$$$, тогда в следующем столбце она окажется на высоте $$$x+k$$$. Если же игрок не нажмет кнопку прыжка, то птичка снизится на одну единицу высоты, т.е. если она была на высоте $$$x$$$, то окажется на высоте $$$x - 1$$$. Заметим, что вертикальное перемещение птички происходит между столбцами. Это значит, что внутри одного столбца птичка проходит только по одной высоте и никак не перемещается горизонтально. Единственное ограничение для ее положения &mdash; ее высота в $$$i$$$-м столбце должна быть от $$$l_i + 1$$$ до $$$r_i - 1$$$ включительно.</P><P>Отметим также, что птичка никогда не может опускаться ниже первой и подниматься выше $$$h$$$-й высоты.</P><P>Уровень будет пройден, если птичка дойдет до $$$n$$$-го столбца.</P><P>Рассмотрим пример уровня (это первый тестовый случай в тесте из условия):</P><P></P><CENTER> <IMG class="tex-graphics" src="/contests_data/3/flappy_bird/49125a1c2f09e62021a5731ec1d5d73aecf403de.png"> </CENTER><P></P><P>Здесь горизонтальные линии обозначают высоты, на которых может находиться птичка, они пронумерованы от $$$1$$$ до $$$7$$$ (т. е. $$$h=7$$$). Изначально птичка находится на высоте $$$s=4$$$, высота ее прыжка равна $$$k=2$$$. В данном примере существует ровно один способ пройти уровень, и он изображен на рисунке. В каждом столбце птичка нарисована на той высоте, на которой она должна находиться в этом столбце.</P><P>Помогите Антону и узнайте, может ли он пройти уровень (т. е. может ли птичка двигаться так, чтобы добраться до $$$n$$$-го столбца).</P></DIV><P></P><P></P><DIV class="input-specification"><DIV class="section-title">Входные данные</DIV><P></P><P>В первой строке дано одно целое число $$$t$$$ ($$$1 \leq t \leq 10\,000$$$) &mdash; количество наборов входных данных. Далее следуют описания каждого из наборов входных данных.</P><P>В первой строке каждого набора входных данных дано четыре целых числа $$$n$$$, $$$h$$$, $$$k$$$ и $$$s$$$ ($$$2 \leq n \leq 100\,000$$$, $$$4 \leq h \leq 10^9$$$, $$$1 \leq k \leq h - 3$$$, $$$2 \leq s \leq h - 1$$$)&nbsp;&mdash; количество столбцов, высота уровня, высота прыжка и стартовая высота. </P><P>В следующих $$$n$$$ строках описываются уровни. В $$$i$$$-й из них дано два целых числа $$$l_i$$$ и $$$r_i$$$ ($$$1 \leq l_i &lt; r_i \leq h$$$, $$$l_i + 2 \le r_i$$$)&nbsp;&mdash; высоты нижней и верхней трубы в $$$i$$$-м столбце. Гарантируется, что $$$l_1 &lt; s &lt; r_1$$$.</P><P>Пусть $$$N$$$ равное сумме $$$n$$$ по всем наборам входных данных. Гарантируется, что $$$N \leq 500\,000$$$.</P></DIV><P></P><P></P><DIV class="output-specification"><DIV class="section-title">Выходные данные</DIV><P></P><P>Выведите $$$t$$$ строк. В $$$i$$$-й строке выведите <SPAN class="tex-font-style-tt">Yes</SPAN> если Антон может пройти уровень из $$$i$$$-го набора входных данных, иначе выведите <SPAN class="tex-font-style-tt">No</SPAN>.</P></DIV><P></P><P></P><DIV class="scoring"><DIV class="section-title">Система оценки</DIV><P></P><P>Всего в этой задаче $$$20$$$ тестов (не считая теста из условия). Оценка потестовая, каждый из тестов, кроме теста из условия, оценивается в $$$5$$$ баллов. На некоторые из тестов наложены дополнительные ограничения, указанные в таблице.</P><P></P><CENTER> <TABLE class="tex-tabular"><TBODY><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">Тесты</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">Дополнительные ограничения</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">Комментарий</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">1</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">Тест из условия</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">2, 3, 4</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$r_i = l_i + 2$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">5, 6, 7</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$n \leq 10$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">8, 9, 10</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$h \leq 100$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">11, 12, 13</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$r_i - l_i \leq 100$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">14, 15, 16</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$n \leq 1000, N \leq 30\,000$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">17, 18</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$k=1$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">19, 20, 21</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&mdash;</TD></TR></TBODY></TABLE> </CENTER></DIV><P></P><P></P><DIV class="sample-tests"><DIV class="section-title">Пример</DIV><P></P><P></P><DIV class="sample-test"><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content" data-content="4
+6 7 2 4
+2 6
+4 7
+1 6
+3 7
+1 4
+4 6
+5 7 1 4
+1 7
+2 6
+1 7
+3 5
+1 7
+8 100 10 50
+49 51
+48 50
+58 60
+68 70
+78 80
+77 79
+87 89
+86 88
+7 8 5 7
+1 8
+1 8
+1 8
+1 8
+1 8
+1 8
+1 7
+">
+<DIV >4</DIV><DIV >6 7 2 4</DIV><DIV >2 6</DIV><DIV >4 7</DIV><DIV >1 6</DIV><DIV >3 7</DIV><DIV >1 4</DIV><DIV >4 6</DIV><DIV >5 7 1 4</DIV><DIV >1 7</DIV><DIV >2 6</DIV><DIV >1 7</DIV><DIV >3 5</DIV><DIV >1 7</DIV><DIV >8 100 10 50</DIV><DIV >49 51</DIV><DIV >48 50</DIV><DIV >58 60</DIV><DIV >68 70</DIV><DIV >78 80</DIV><DIV >77 79</DIV><DIV >87 89</DIV><DIV >86 88</DIV><DIV >7 8 5 7</DIV><DIV >1 8</DIV><DIV >1 8</DIV><DIV >1 8</DIV><DIV >1 8</DIV><DIV >1 8</DIV><DIV >1 8</DIV><DIV >1 7</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+Yes
+No
+Yes
+No
+</PRE></DIV></DIV></DIV><P></P><P></P><DIV class="note"><DIV class="section-title">Примечание</DIV><P></P><P>Первый тестовый случай в примере совпадает с уровнем на картинке.</P></DIV></DIV><P></P><P>  </P>

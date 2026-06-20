@@ -65,14 +65,23 @@ def import_mosh_task_zip(
     letter: str,
     task_name: str,
     db: Session,
+    progress_cb=None,
 ) -> Task:
     """Импортирует одну задачу МОШ из ZIP (одна папка или файлы в корне)."""
     zip_path = Path(zip_path)
+
+    def _report(pct, msg):
+        if progress_cb:
+            progress_cb(pct, msg)
+
+    _report(5, "Распаковка архива МОШ...")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
         with zipfile.ZipFile(zip_path, "r") as zf:
             zf.extractall(tmpdir)
+
+        _report(15, "Поиск папки задачи...")
 
         task_dir = _find_single_task_root(tmpdir)
         if not task_dir:
@@ -85,6 +94,7 @@ def import_mosh_task_zip(
             order=ord(letter.upper()[0]) - ord("A") + 1 if len(letter) == 1 else 0,
             db=db,
             override_name=task_name.strip() or None,
+            progress_cb=progress_cb,
         )
 
 
@@ -114,7 +124,14 @@ def _import_mosh_task_dir(
     order: int,
     db: Session,
     override_name: str | None = None,
+    progress_cb=None,
 ) -> Task:
+    def _report(pct, msg):
+        if progress_cb:
+            progress_cb(pct, msg)
+
+    _report(20, "Парсинг meta.json...")
+
     meta = json.loads((task_dir / "meta.json").read_text(encoding="utf-8"))
     pm = meta.get("problemMetadata") or {}
     testSets = pm.get("testSets") or {}
@@ -132,6 +149,13 @@ def _import_mosh_task_dir(
     time_limit = float(limits.get("timeLimitMillis", 1000)) / 1000.0
     memory_limit = int(limits.get("memoryLimit", 268435456)) // (1024 * 1024)
 
+    # "TEST_ANSWER" — задача типа output-only: участник сдаёт готовый файл
+    # с ответом, а не код программы. "WITH_CHECKER" (или отсутствие поля) —
+    # обычная задача с проверкой через checker.
+    is_output_only = pm.get("problemTypeMeta") == "TEST_ANSWER"
+
+    _report(30, f"Чтение условия «{title}»...")
+
     statement_html, statement_dir = _read_mosh_statement(task_dir)
 
     task_slug = re.sub(r"[^\w\-]", "_", title.lower())[:40]
@@ -139,21 +163,31 @@ def _import_mosh_task_dir(
     tests_dst = dest_dir / "tests"
     tests_dst.mkdir(parents=True, exist_ok=True)
 
+    _report(40, "Сохранение условия и ассетов...")
+
     if statement_html:
         if statement_dir:
             _copy_statement_assets(statement_dir, dest_dir)
         statement_html = _rewrite_asset_urls(statement_html, contest_id, task_slug)
         (dest_dir / "problem.html").write_text(statement_html, encoding="utf-8")
 
+    _report(50, "Копирование тестов...")
+
     tests_src = task_dir / "tests"
     if tests_src.exists():
         _copy_tests(tests_src, tests_dst)
 
+    _report(60, "Настройка чекера...")
+
     checker_path = _resolve_mosh_checker(task_dir, dest_dir)
+
+    _report(70, "Подсчёт максимальных баллов по тестам...")
 
     test_scores = compute_test_max_scores(checker_path, all_tests, tests_dst.as_posix())
     max_score = sum(test_scores)
     test_scores_json = json.dumps(test_scores)
+
+    _report(85, "Сохранение в базу данных...")
 
     if order <= 0:
         order = _letter_order(letter)
@@ -171,6 +205,7 @@ def _import_mosh_task_dir(
         scoring_type     = ScoringType.MOSH,
         max_score        = max_score,
         test_scores_json = test_scores_json,
+        is_output_only   = is_output_only,
     )
     db.add(task)
     db.flush()
@@ -188,6 +223,9 @@ def _import_mosh_task_dir(
         ))
 
     db.commit()
+
+    _report(95, f"Финализация «{title}»...")
+
     print(f"[mosh] Импортировано: '{title}' → контест {contest_id}, {letter}, max={max_score}")
     return task
 
@@ -263,4 +301,3 @@ def _letter_order(letter: str) -> int:
     if len(letter) == 1:
         return ord(letter.upper()) - ord("A") + 1
     return 1
-
