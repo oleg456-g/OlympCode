@@ -177,7 +177,36 @@ def _import_mosh_task_dir(
     if tests_src.exists():
         _copy_tests(tests_src, tests_dst)
 
-    _report(60, "Настройка чекера...")
+    _report(60, "Копирование решений авторов...")
+
+    mosh_solutions = pm.get("solutions") or []
+    if mosh_solutions:
+        solutions_dst = dest_dir / "solutions"
+        solutions_dst.mkdir(exist_ok=True)
+        used_names: set[str] = set()
+        for sol in mosh_solutions:
+            src_rel  = sol.get("sourcePath", "")
+            verdict  = sol.get("verdict", "unknown").lower()
+            if not src_rel:
+                continue
+            src_path = task_dir / src_rel
+            if not src_path.exists():
+                # sourcePath может быть относительным без префикса папки
+                src_path = task_dir / src_path.name
+            if not src_path.exists():
+                continue
+            # Именуем как verdict + оригинальное имя файла, чтобы было понятно
+            safe_verdict = re.sub(r"[^\w\-]", "_", verdict)
+            dst_name = f"{safe_verdict}_{src_path.name}"
+            counter = 2
+            while dst_name in used_names:
+                stem, suf = src_path.stem, src_path.suffix
+                dst_name = f"{safe_verdict}_{stem}_{counter}{suf}"
+                counter += 1
+            used_names.add(dst_name)
+            shutil.copy2(src_path, solutions_dst / dst_name)
+
+    _report(65, "Настройка чекера...")
 
     checker_path = _resolve_mosh_checker(task_dir, dest_dir)
 
@@ -269,20 +298,29 @@ def _read_mosh_statement(task_dir: Path) -> tuple[str | None, Path | None]:
 
 
 def _resolve_mosh_checker(task_dir: Path, dest_dir: Path) -> str:
-    """Ищет готовый чекер или компилирует check.cpp."""
+    """Ищет готовый чекер или компилирует check.cpp. Всегда сохраняет .cpp исходник."""
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    has_cpp = any(
-        (task_dir / rel).exists()
-        for rel in ["check.cpp", "files/check.cpp", "checkers/check.cpp"]
-    )
+    # Ищем .cpp исходник
+    cpp_candidates = [
+        task_dir / "check.cpp",
+        task_dir / "files" / "check.cpp",
+        task_dir / "checkers" / "check.cpp",
+    ]
+    check_src = next((c for c in cpp_candidates if c.exists()), None)
 
+    # Всегда сохраняем .cpp рядом с бинарником
+    if check_src:
+        shutil.copy2(check_src, dest_dir / "checker.cpp")
+
+    # Ищем готовый бинарник
     for rel in ["files/check.exe", "checker.exe", "files/check", "checkers/check", "check"]:
         src = task_dir / rel
         if not src.exists() or not src.is_file():
             continue
-        if os.name == "nt" and not rel.endswith(".exe") and has_cpp:
-            continue  # на Windows компилируем .cpp вместо Linux-бинарника
+        # На Windows пропускаем Linux-бинарники если есть .cpp для компиляции
+        if os.name == "nt" and not rel.endswith(".exe") and check_src:
+            continue
         dst_name = "checker.exe" if os.name == "nt" else "checker"
         dst = dest_dir / dst_name
         shutil.copy2(src, dst)

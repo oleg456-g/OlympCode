@@ -156,6 +156,11 @@
                     style="font-size:12px; padding:2px 8px" title="Выше">↑</button>
             <button type="button" class="btn btn--outline btn-reorder" data-dir="down"
                     style="font-size:12px; padding:2px 8px" title="Ниже">↓</button>
+            <a href="/admin/task/{{ ct.task.id }}"
+               class="btn btn--outline"
+               style="font-size:12px; padding:3px 10px; color:var(--blue); border-color:var(--blue)">
+              Ред.
+            </a>
             <button type="button" class="btn btn--outline btn-delete-task"
                     data-action="/admin/contest/{{ contest.id }}/delete/{{ ct.id }}"
                     style="font-size:12px; padding:3px 10px; color:var(--red); border-color:var(--red-dim)">

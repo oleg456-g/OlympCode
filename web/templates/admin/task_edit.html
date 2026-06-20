@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block title %}Редактирование: {{ task.title }} — OlympCode{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/admin/">Админ</a>
+  <span>›</span>
+  {% for item in contests %}
+    <a href="/admin/contest/{{ item.contest.id }}">{{ item.contest.title }}</a>
+    <span style="color:var(--text-3); font-size:11px">({{ item.ct.letter }})</span>
+    {% if not loop.last %}<span>·</span>{% endif %}
+  {% endfor %}
+  {% if contests %}<span>›</span>{% endif %}
+  <span>{{ task.title }}</span>
+</div>
+
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px">
+  <div>
+    <h1 style="margin:0">{{ task.title }}</h1>
+    <div style="font-size:13px; color:var(--text-3); margin-top:4px; font-family:var(--mono)">
+      ID {{ task.id }} · {{ task.scoring_type.value }} · {{ task.time_limit }}с · {{ task.memory_limit }}МБ
+      {% if task.is_interactive %} · <span style="color:var(--amber)">⚡ интерактивная</span>{% endif %}
+      {% if task.is_output_only %} · <span style="color:var(--blue)">📄 output-only</span>{% endif %}
+    </div>
+  </div>
+  {% if contests %}
+    <a href="/task/{{ task.id }}?contest_id={{ contests[0].contest.id }}" class="btn btn--outline btn--small" target="_blank">
+      Открыть задачу →
+    </a>
+  {% endif %}
+</div>
+
+{% if ok %}
+<div class="alert alert--ok" style="background:var(--green-dim);border:1px solid var(--green);color:var(--green);padding:10px 16px;border-radius:var(--radius);margin-bottom:16px">
+  ✓ {{ ok }}
+</div>
+{% endif %}
+{% if error %}
+<div class="alert alert--error" style="background:var(--red-dim);border:1px solid var(--red);color:var(--red);padding:10px 16px;border-radius:var(--radius);margin-bottom:16px">
+  ✗ {{ error }}
+</div>
+{% endif %}
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+
+  <!-- ── Условие ───────────────────────────────────────────────────── -->
+  <div class="card">
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Условие (problem.html)</h2>
+    <p style="font-size:12px; color:var(--text-3); margin-bottom:12px">
+      Загрузи новый HTML-файл чтобы заменить условие задачи.
+    </p>
+    <form method="post" action="/admin/task/{{ task.id }}/upload-statement" enctype="multipart/form-data">
+      <div class="form-group">
+        <input class="form-input" type="file" name="file" accept=".html,.htm" required style="padding:6px">
+      </div>
+      <button class="btn btn--primary" type="submit" style="width:100%">Обновить условие →</button>
+    </form>
+  </div>
+
+  <!-- ── Checker ──────────────────────────────────────────────────── -->
+  <div class="card">
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Checker</h2>
+    {% if task.checker_path %}
+      <div style="font-family:var(--mono); font-size:12px; color:var(--text-3); margin-bottom:12px; word-break:break-all">
+        {{ checker_name }}
+      </div>
+    {% else %}
+      <div style="font-size:12px; color:var(--red); margin-bottom:12px">Checker не задан</div>
+    {% endif %}
+    <form method="post" action="/admin/task/{{ task.id }}/upload-checker" enctype="multipart/form-data">
+      <div class="form-group">
+        <input class="form-input" type="file" name="file" accept=".exe,.out,.cpp" required style="padding:6px">
+      </div>
+      <button class="btn btn--primary" type="submit" style="width:100%">Заменить checker →</button>
+    </form>
+  </div>
+
+</div>
+
+<!-- ── Интерактор (только для интерактивных задач) ─────────────────────── -->
+{% if task.is_interactive %}
+<div class="card" style="margin-top:20px">
+  <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">
+    Интерактор <span style="color:var(--amber); font-size:12px">⚡</span>
+  </h2>
+  {% if task.interactor_path %}
+    <div style="font-family:var(--mono); font-size:12px; color:var(--text-3); margin-bottom:12px; word-break:break-all">
+      {{ task.interactor_path | replace("\\", "/") }}
+    </div>
+  {% else %}
+    <div style="font-size:12px; color:var(--red); margin-bottom:12px">Интерактор не задан</div>
+  {% endif %}
+  <form method="post" action="/admin/task/{{ task.id }}/upload-interactor" enctype="multipart/form-data">
+    <div class="form-group">
+      <input class="form-input" type="file" name="file" accept=".exe,.out,.cpp" required style="padding:6px">
+    </div>
+    <button class="btn btn--primary" type="submit" style="width:100%">Заменить интерактор →</button>
+  </form>
+</div>
+{% else %}
+<div class="card" style="margin-top:20px">
+  <h2 style="font-size:15px; font-weight:600; margin-bottom:12px; color:var(--text-3)">Интерактор</h2>
+  <p style="font-size:13px; color:var(--text-3); margin-bottom:12px">Задача не помечена как интерактивная.</p>
+  <form method="post" action="/admin/task/{{ task.id }}/upload-interactor" enctype="multipart/form-data">
+    <div class="form-group">
+      <input class="form-input" type="file" name="file" accept=".exe,.out,.cpp" required style="padding:6px">
+    </div>
+    <button class="btn btn--outline" type="submit" style="width:100%">Загрузить интерактор (сделает задачу интерактивной) →</button>
+  </form>
+</div>
+{% endif %}
+
+<!-- ── Решения авторов ───────────────────────────────────────────────── -->
+<div class="card" style="margin-top:20px">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+    <h2 style="font-size:15px; font-weight:600; margin:0">
+      Решения авторов <span style="color:var(--text-3); font-weight:400; font-size:13px">(скрыты от участников)</span>
+    </h2>
+    <span style="font-size:12px; color:var(--text-3)">{{ solutions | length }} файлов</span>
+  </div>
+
+  {% if solutions %}
+  <div style="margin-bottom:16px">
+    {% for s in solutions %}
+    <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border)">
+      <span style="font-family:var(--mono); font-size:13px; flex:1">{{ s.name }}</span>
+      <span style="font-size:11px; color:var(--text-3)">{{ (s.size / 1024) | round(1) }} KB</span>
+      <form method="post" action="/admin/task/{{ task.id }}/solution/{{ s.name }}/delete"
+            onsubmit="return confirm('Удалить {{ s.name }}?')">
+        <button class="btn btn--danger" type="submit"
+                style="font-size:11px; padding:3px 10px">✕</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="font-size:13px; color:var(--text-3); margin-bottom:16px">Решений пока нет</div>
+  {% endif %}
+
+  <form method="post" action="/admin/task/{{ task.id }}/upload-solution" enctype="multipart/form-data">
+    <div style="display:flex; gap:10px; align-items:flex-end">
+      <div class="form-group" style="flex:1; margin:0">
+        <input class="form-input" type="file" name="file" accept=".cpp,.py,.java,.txt" required style="padding:6px">
+      </div>
+      <button class="btn btn--primary" type="submit">Загрузить →</button>
+    </div>
+  </form>
+</div>
+
+<!-- ── Тесты ─────────────────────────────────────────────────────────── -->
+<div class="card" style="margin-top:20px">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+    <h2 style="font-size:15px; font-weight:600; margin:0">Тесты</h2>
+    <span style="font-size:12px; color:var(--text-3)">{{ tests | length }} тестов</span>
+  </div>
+
+  {% if tests %}
+  <div id="tests-list">
+    {% for t in tests %}
+    <div class="test-item" id="test-item-{{ t.num }}"
+         style="border:1px solid var(--border); border-radius:var(--radius); margin-bottom:8px; overflow:hidden">
+      <!-- Заголовок теста -->
+      <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; cursor:pointer; background:var(--bg-card)"
+           onclick="toggleTest({{ t.num }})">
+        <span style="font-family:var(--mono); font-weight:700; color:var(--text-2); min-width:32px">{{ '%02d' % t.num }}</span>
+        <span style="font-size:12px; color:var(--text-3)">
+          {{ t.name }}
+          {% if t.has_ans %} · <span style="color:var(--green)">✓ ответ</span>
+          {% else %} · <span style="color:var(--amber)">нет ответа</span>{% endif %}
+          · {{ (t.size / 1024) | round(1) }} KB
+        </span>
+        <span style="margin-left:auto; font-size:12px; color:var(--text-3)" id="arrow-{{ t.num }}">▼</span>
+      </div>
+
+      <!-- Редактор теста (скрыт по умолчанию) -->
+      <div id="test-editor-{{ t.num }}" style="display:none; padding:14px; border-top:1px solid var(--border)">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px">
+          <div>
+            <label style="font-size:12px; color:var(--text-3); display:block; margin-bottom:4px">Входные данные</label>
+            <textarea id="test-input-{{ t.num }}"
+                      style="width:100%; height:180px; font-family:var(--mono); font-size:12px;
+                             background:var(--bg-input); border:1px solid var(--border); border-radius:6px;
+                             color:var(--text-1); padding:8px; resize:vertical; box-sizing:border-box"
+                      placeholder="Загружается..."></textarea>
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-3); display:block; margin-bottom:4px">Эталонный ответ</label>
+            <textarea id="test-ans-{{ t.num }}"
+                      style="width:100%; height:180px; font-family:var(--mono); font-size:12px;
+                             background:var(--bg-input); border:1px solid var(--border); border-radius:6px;
+                             color:var(--text-1); padding:8px; resize:vertical; box-sizing:border-box"
+                      placeholder="Загружается..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center">
+          <button class="btn btn--primary btn--small"
+                  onclick="saveTest({{ t.num }}, '{{ t.name }}')">Сохранить</button>
+          <span id="test-save-status-{{ t.num }}" style="font-size:12px; color:var(--text-3)"></span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="font-size:13px; color:var(--text-3)">Тесты не найдены</div>
+  {% endif %}
+</div>
+
+<!-- ── Структура файлов ──────────────────────────────────────────────── -->
+<div class="card" style="margin-top:20px; margin-bottom:32px">
+  <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Файловая структура на сервере</h2>
+  <div style="font-family:var(--mono); font-size:11px; color:var(--text-3); margin-bottom:8px; word-break:break-all">
+    {{ data_dir }}
+  </div>
+  <div style="font-family:var(--mono); font-size:12px; line-height:1.8">
+    {% for f in file_tree %}
+      <div style="padding-left:{{ f.depth * 16 }}px; color:{{ 'var(--text-2)' if f.is_dir else 'var(--text-1)' }}">
+        {% if f.is_dir %}
+          📁 {{ f.basename }}/
+        {% else %}
+          📄 {{ f.basename }}
+          <span style="color:var(--text-3)"> ({{ (f.size / 1024) | round(1) }} KB)</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TASK_ID = {{ task.id }};
+const loadedTests = {};
+
+async function toggleTest(num) {
+  const editor = document.getElementById(`test-editor-${num}`);
+  const arrow  = document.getElementById(`arrow-${num}`);
+  const isOpen = editor.style.display !== 'none';
+
+  if (isOpen) {
+    editor.style.display = 'none';
+    arrow.textContent = '▼';
+    return;
+  }
+
+  editor.style.display = 'block';
+  arrow.textContent = '▲';
+
+  if (loadedTests[num]) return;  // уже загружен
+
+  const testName = document.getElementById(`test-item-${num}`)
+    .querySelector('[style*="border-top"]') ? null :
+    document.querySelector(`#test-item-${num} [style*="font-weight:700"]`)
+             ?.nextElementSibling?.textContent?.trim()?.split(' ')[0];
+
+  // Ищем имя файла из атрибута data на кнопке save
+  const saveBtn = editor.querySelector('button');
+  // Имя есть в onclick: saveTest(num, 'filename')
+  // Загружаем контент через API
+  try {
+    const res = await fetch(`/admin/task/${TASK_ID}/test/{{ '${num}' | safe }}`);
+    if (!res.ok) throw new Error('not found');
+
+    // Нам нужно имя файла — получим его из onclick атрибута кнопки save
+    // которая уже содержит имя теста
+    const data = await res.json();
+    document.getElementById(`test-input-${num}`).value = data.input || '';
+    document.getElementById(`test-ans-${num}`).value   = data.answer || '';
+    loadedTests[num] = true;
+  } catch (e) {
+    document.getElementById(`test-input-${num}`).value = 'Ошибка загрузки';
+  }
+}
+
+// Переписываем toggleTest чтобы передавать имя файла
+{% for t in tests %}
+(function() {
+  const num  = {{ t.num }};
+  const name = {{ t.name | tojson }};
+  const origToggle = window.toggleTest;
+
+  document.getElementById(`test-item-${num}`)
+    .querySelector('div').onclick = async function() {
+      const editor = document.getElementById(`test-editor-${num}`);
+      const arrow  = document.getElementById(`arrow-${num}`);
+      const isOpen = editor.style.display !== 'none';
+
+      if (isOpen) {
+        editor.style.display = 'none';
+        arrow.textContent = '▼';
+        return;
+      }
+      editor.style.display = 'block';
+      arrow.textContent = '▲';
+
+      if (loadedTests[num]) return;
+      try {
+        const res = await fetch(`/admin/task/${TASK_ID}/test/${encodeURIComponent(name)}`);
+        const data = await res.json();
+        document.getElementById(`test-input-${num}`).value = data.input || '';
+        document.getElementById(`test-ans-${num}`).value   = data.answer || '';
+        loadedTests[num] = true;
+      } catch (e) {
+        document.getElementById(`test-input-${num}`).value = 'Ошибка загрузки';
+      }
+    };
+})();
+{% endfor %}
+
+async function saveTest(num, name) {
+  const input  = document.getElementById(`test-input-${num}`).value;
+  const answer = document.getElementById(`test-ans-${num}`).value;
+  const status = document.getElementById(`test-save-status-${num}`);
+  status.textContent = 'Сохраняю...';
+  status.style.color = 'var(--text-3)';
+  try {
+    const res = await fetch(
+      `/admin/task/${TASK_ID}/test/${encodeURIComponent(name)}/save`,
+      {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({input, answer}),
+      }
+    );
+    if (res.ok) {
+      status.textContent = '✓ Сохранено';
+      status.style.color = 'var(--green)';
+      setTimeout(() => status.textContent = '', 3000);
+    } else {
+      throw new Error('server error');
+    }
+  } catch (e) {
+    status.textContent = '✗ Ошибка';
+    status.style.color = 'var(--red)';
+  }
+}
+</script>
+{% endblock %}

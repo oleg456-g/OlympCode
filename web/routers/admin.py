@@ -295,6 +295,300 @@ async def import_jobs(contest_id: int, request: Request, db: Session = Depends(g
     return JSONResponse([j.to_dict() for j in jobs])
 
 
+# ── Редактирование задачи ────────────────────────────────────────────────────
+
+@router.get("/task/{task_id}")
+async def task_edit_page(task_id: int, request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if not user:
+        return RedirectResponse("/auth/login", status_code=302)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return RedirectResponse("/admin/", status_code=302)
+
+    data_dir = _task_data_dir(task)
+    tests_dir = Path(task.tests_path) if task.tests_path else None
+
+    # Список тестов
+    tests = []
+    if tests_dir and tests_dir.exists():
+        in_files = sorted(
+            [f for f in tests_dir.iterdir() if f.is_file()
+             and not f.name.endswith(('.a', '.ans', '.out'))],
+            key=lambda p: int(p.stem) if p.stem.isdigit()
+                          else int(p.name) if p.name.isdigit() else 0
+        )
+        for f in in_files:
+            num = int(f.stem) if f.stem.isdigit() else int(f.name) if f.name.isdigit() else 0
+            ans = None
+            for suf in ('.a', '.ans', '.out'):
+                cand = f.parent / (f.name + suf) if not f.suffix else f.with_suffix(suf)
+                if cand.exists():
+                    ans = cand
+                    break
+            size = f.stat().st_size
+            tests.append({
+                "num": num,
+                "name": f.name,
+                "size": size,
+                "has_ans": ans is not None,
+                "ans_name": ans.name if ans else None,
+            })
+
+    # Список решений
+    solutions = []
+    solutions_dir = data_dir / "solutions" if data_dir else None
+    if solutions_dir and solutions_dir.exists():
+        solutions = sorted([
+            {"name": f.name, "size": f.stat().st_size}
+            for f in solutions_dir.iterdir() if f.is_file()
+        ], key=lambda x: x["name"])
+
+    # Файловое дерево задачи
+    file_tree = []
+    if data_dir and data_dir.exists():
+        for item in sorted(data_dir.rglob("*")):
+            rel = item.relative_to(data_dir)
+            file_tree.append({
+                "path":     str(rel).replace("\\", "/"),
+                "basename": item.name,
+                "is_dir":   item.is_dir(),
+                "size":     item.stat().st_size if item.is_file() else 0,
+                "depth":    len(rel.parts) - 1,
+            })
+
+    checker_name = Path(task.checker_path).name if task.checker_path else ""
+
+    # Все контесты где есть эта задача
+    from models import Contest
+    contest_tasks = (
+        db.query(ContestTask)
+        .filter_by(task_id=task_id)
+        .all()
+    )
+    contests = []
+    for ct in contest_tasks:
+        contest = db.query(Contest).filter_by(id=ct.contest_id).first()
+        if contest:
+            contests.append({"ct": ct, "contest": contest})
+
+    return templates.TemplateResponse("admin/task_edit.html", {
+        "request":      request,
+        "user":         user,
+        "task":         task,
+        "contests":     contests,
+        "tests":        tests,
+        "solutions":    solutions,
+        "file_tree":    file_tree,
+        "data_dir":     str(data_dir) if data_dir else "",
+        "checker_name": checker_name,
+        "ok":           request.query_params.get("ok"),
+        "error":        request.query_params.get("error"),
+    })
+
+
+@router.get("/task/{task_id}/test/{test_name}")
+async def get_test_content(task_id: int, test_name: str, request: Request,
+                           db: Session = Depends(get_db)):
+    """Возвращает содержимое теста (input и answer) как JSON."""
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    tests_dir = Path(task.tests_path)
+    in_file = tests_dir / test_name
+    if not in_file.exists() or not in_file.is_file():
+        return JSONResponse({"error": "test not found"}, status_code=404)
+
+    # Защита от path traversal
+    try:
+        in_file.relative_to(tests_dir)
+    except ValueError:
+        return JSONResponse({"error": "invalid path"}, status_code=400)
+
+    content = in_file.read_text(encoding="utf-8", errors="replace")
+
+    ans_content = ""
+    for suf in ('.a', '.ans', '.out'):
+        cand = in_file.parent / (in_file.name + suf) if not in_file.suffix else in_file.with_suffix(suf)
+        if cand.exists():
+            ans_content = cand.read_text(encoding="utf-8", errors="replace")
+            break
+
+    return JSONResponse({"input": content, "answer": ans_content})
+
+
+@router.post("/task/{task_id}/test/{test_name}/save")
+async def save_test_content(task_id: int, test_name: str, request: Request,
+                             db: Session = Depends(get_db)):
+    """Сохраняет изменённый текст теста."""
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    tests_dir = Path(task.tests_path)
+    in_file = tests_dir / test_name
+    try:
+        in_file.relative_to(tests_dir)
+    except ValueError:
+        return JSONResponse({"error": "invalid path"}, status_code=400)
+
+    body = await request.json()
+    in_file.write_text(body.get("input", ""), encoding="utf-8")
+
+    ans_text = body.get("answer", "")
+    if ans_text.strip():
+        # Определяем расширение эталонного ответа
+        ans_file = None
+        for suf in ('.a', '.ans', '.out'):
+            cand = in_file.parent / (in_file.name + suf) if not in_file.suffix else in_file.with_suffix(suf)
+            if cand.exists():
+                ans_file = cand
+                break
+        if not ans_file:
+            ans_file = in_file.parent / (in_file.name + ".a")
+        ans_file.write_text(ans_text, encoding="utf-8")
+
+    return JSONResponse({"ok": True})
+
+
+@router.post("/task/{task_id}/upload-checker")
+async def upload_checker(task_id: int, request: Request,
+                         file: UploadFile = File(...),
+                         db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    data_dir = _task_data_dir(task)
+    if not data_dir:
+        return JSONResponse({"error": "task has no data dir"}, status_code=400)
+
+    ext = Path(file.filename).suffix or ".exe"
+    dst = data_dir / f"checker{ext}"
+    dst.write_bytes(await file.read())
+    if os.name != "nt":
+        dst.chmod(0o755)
+
+    task.checker_path = str(dst)
+    db.commit()
+    return RedirectResponse(f"/admin/task/{task_id}?ok=Checker обновлён", status_code=303)
+
+
+@router.post("/task/{task_id}/upload-interactor")
+async def upload_interactor(task_id: int, request: Request,
+                             file: UploadFile = File(...),
+                             db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    data_dir = _task_data_dir(task)
+    if not data_dir:
+        return JSONResponse({"error": "task has no data dir"}, status_code=400)
+
+    ext = Path(file.filename).suffix or ".exe"
+    dst = data_dir / f"interactor{ext}"
+    dst.write_bytes(await file.read())
+    if os.name != "nt":
+        dst.chmod(0o755)
+
+    task.interactor_path = str(dst)
+    task.is_interactive  = True
+    db.commit()
+    return RedirectResponse(f"/admin/task/{task_id}?ok=Interactor обновлён", status_code=303)
+
+
+@router.post("/task/{task_id}/upload-solution")
+async def upload_solution(task_id: int, request: Request,
+                           file: UploadFile = File(...),
+                           db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    data_dir = _task_data_dir(task)
+    solutions_dir = data_dir / "solutions"
+    solutions_dir.mkdir(exist_ok=True)
+
+    dst = solutions_dir / file.filename
+    # Антиперезапись
+    counter = 2
+    while dst.exists():
+        stem, suf = Path(file.filename).stem, Path(file.filename).suffix
+        dst = solutions_dir / f"{stem}_{counter}{suf}"
+        counter += 1
+
+    dst.write_bytes(await file.read())
+    return RedirectResponse(f"/admin/task/{task_id}?ok=Решение загружено: {dst.name}", status_code=303)
+
+
+@router.post("/task/{task_id}/upload-statement")
+async def upload_statement(task_id: int, request: Request,
+                            file: UploadFile = File(...),
+                            db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    data_dir = _task_data_dir(task)
+    dst = data_dir / "problem.html"
+    content = await file.read()
+    dst.write_bytes(content)
+
+    task.statement_html = content.decode("utf-8", errors="replace")
+    db.commit()
+    return RedirectResponse(f"/admin/task/{task_id}?ok=Условие обновлено", status_code=303)
+
+
+@router.post("/task/{task_id}/solution/{filename}/delete")
+async def delete_solution(task_id: int, filename: str, request: Request,
+                           db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    data_dir = _task_data_dir(task)
+    target = data_dir / "solutions" / filename
+    try:
+        target.relative_to(data_dir)  # path traversal guard
+        if target.exists():
+            target.unlink()
+    except ValueError:
+        return JSONResponse({"error": "invalid path"}, status_code=400)
+
+    return RedirectResponse(f"/admin/task/{task_id}?ok=Файл удалён", status_code=303)
+
+
 # ── Полное удаление задачи ────────────────────────────────────────────────────
 
 def _task_data_dir(task: Task) -> Path | None:

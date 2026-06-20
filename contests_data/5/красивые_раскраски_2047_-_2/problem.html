@@ -1,0 +1,322 @@
+<style>
+.problem-statement {
+    margin: 0.5em auto 2em auto;
+    font-family: verdana,serif;
+    line-height: 1.5em;
+    font-size: 14px;
+    max-width: 1024px;
+}
+
+.problem-statement .epigraph {
+    margin-left: 67%;
+    width: 33%;
+}
+
+.problem-statement .epigraph-text {
+}
+
+.problem-statement .epigraph-source {
+    border-top: 1px solid #888;
+    text-align: right;
+}
+
+.problem-statement .lstlisting {
+    padding: 0.5em;
+    
+}
+
+.problem-statement .tex-tabular {
+    margin: 1em 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.problem-statement .tex-tabular td {
+    padding: 0.15em 0.7em;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-left {
+    border-left: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-right {
+    border-right: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-top {
+    border-top: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-left {
+    text-align: left;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-center {
+    text-align: center;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-right {
+    text-align: right;
+}
+
+.problem-statement p {
+    margin: 0 0 1em 0;
+}
+
+.problem-statement p a, .problem-statement ul a, .problem-statement ol a, .problem-statement td a {
+    margin: 0;
+}
+
+.problem-statement .header {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    margin-bottom: 0.25em;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    font-family: arial, serif;
+}
+
+.problem-statement ul {
+    list-style: disc outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement ol {
+    list-style: decimal outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement li {
+    line-height: 1.5em;
+    margin-left: 3em;
+}
+
+.problem-statement .property-title {
+    display: inline;
+}
+
+.problem-statement .property-title:after {
+    content: ": ";
+}
+
+.problem-statement .time-limit, .problem-statement .memory-limit, .problem-statement .input-file, .problem-statement .output-file {
+    margin: 0 auto;
+}
+
+.problem-statement .legend {
+    margin-bottom: 1em;
+}
+
+.problem-statement .tutorial {
+    margin-bottom: 1em;
+}
+
+.problem-statement .section-title {
+    font-family: arial, serif;
+    font-size: 115%;
+    font-weight: bold;
+}
+
+.problem-statement .input-specification,
+    .problem-statement .output-specification,
+    .problem-statement .sample-tests,
+    .problem-statement .author,
+    .problem-statement .resource,
+    .problem-statement .date {
+    /*margin-bottom: 1em;*/
+}
+
+.problem-statement .output-specification {
+    margin-bottom: 1em;
+}
+
+.problem-statement .sample-tests .sample-test {
+}
+
+.problem-statement .sample-tests .input, .problem-statement .sample-tests .output {
+    border: 1px solid #888;
+}
+
+.problem-statement .sample-tests .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.problem-statement .sample-tests pre {
+    line-height: 1.25em;
+    padding: 0.25em;
+    margin: 0;
+    
+}
+
+.problem-statement .sample-tests .title {
+    font-family: arial, serif;
+    padding: 0.25em;
+    border-bottom: 1px solid #888;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+.problem-statement .tex-formula {
+    vertical-align: middle;
+    margin: 0;
+    border:medium none;
+    position: relative;
+    bottom: 2px;
+}
+
+.problem-statement .tex-span {
+    font-size: 125%;
+    font-family: times new roman, serif;
+    white-space: nowrap;
+}
+
+.problem-statement .tex-font-size-tiny {
+    font-size: 70%;
+}
+
+.problem-statement .tex-font-size-script {
+    font-size: 75%;
+}
+
+.problem-statement .tex-font-size-footnotes {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-small {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-normal {
+    font-size: 100%;
+}
+
+.problem-statement .tex-font-size-large-1 {
+    font-size: 115%;
+}
+
+.problem-statement .tex-font-size-large-2 {
+    font-size: 130%;
+}
+
+.problem-statement .tex-font-size-large-3 {
+    font-size: 145%;
+}
+
+.problem-statement .tex-font-size-huge-1 {
+    font-size: 175%;
+}
+
+.problem-statement .tex-font-size-huge-2 {
+    font-size: 200%;
+}
+
+.problem-statement .tex-font-style-rm {
+}
+
+.problem-statement .tex-font-style-striked {
+    text-decoration: line-through;
+}
+
+.problem-statement .tex-font-style-underline {
+    text-decoration: underline;
+}
+
+.problem-statement .tex-font-style-sf {
+    font-family: arial, serif;
+}
+
+.problem-statement .tex-font-style-tt {
+    font-size: 110%;
+    font-family: courier new, serif;
+}
+
+.problem-statement .tex-font-style-md {
+}
+
+.problem-statement .tex-font-style-bf {
+    font-weight: bold;
+}
+
+.problem-statement .tex-font-style-up {
+}
+
+.problem-statement .tex-font-style-it {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sl {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sc {
+    text-transform: uppercase;
+}
+
+.problem-statement .tex-graphics {
+    max-width: 95%;
+    display: block;
+}
+
+.problem-statement .tex-tabular .tex-graphics {
+    max-width: 100%;
+}
+
+.problem-statement .input-output-copier {
+    font-size: 0.75rem;
+    float: right;
+    color: #888;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid rgb(185, 185, 185);
+    line-height: 0.8rem;
+    text-transform: none;
+}
+
+.problem-statement .input-output-copier:hover {
+    background-color: #def;
+}
+
+.problem-statement .test-example-line-even {
+    background-color: #E0E0E0;
+}
+
+.statement-footnote {
+    font-size: 85%;
+    position: relative;
+}
+
+.statement-footnote::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 25%;
+    border-top: 1px solid #888;
+}
+
+.statement-footnote p {
+    margin-bottom: 0.5em;
+}
+
+.statement-footnote p:last-child {
+    margin-bottom: 1em;
+}
+
+.problem-statement .header .input-standard,
+.problem-statement .header .output-standard {
+    display: none;
+}
+
+</style>
+<DIV class="problem-statement"><DIV class="header"><DIV class="title">Красивые раскраски 2047</DIV><DIV class="time-limit"><DIV class="property-title">ограничение по времени на тест</DIV>15 секунд</DIV><DIV class="memory-limit"><DIV class="property-title">ограничение по памяти на тест</DIV>256 мегабайт</DIV><DIV class="input-file input-standard"><DIV class="property-title">ввод</DIV>стандартный ввод</DIV><DIV class="output-file output-standard"><DIV class="property-title">вывод</DIV>стандартный вывод</DIV></DIV><DIV class="legend"><P>Дан неориентированный планарный граф на $$$n$$$ вершинах и целое положительное число $$$k$$$. Назовем раскраску графа <SPAN class="tex-font-style-it">красивой</SPAN>, если никакие две соседние его вершины не покрашены в один цвет (для лучшего понимания рекомендуем обратиться к разделу "Примечание"). Найдите количество красивых раскрасок графа в $$$k$$$ цветов.</P></DIV><P></P><P></P><DIV class="input-specification"><DIV class="section-title">Входные данные</DIV><P></P><P>В первой строке ввода находится единственное целое число $$$t$$$&nbsp;&mdash; количество тестовых случаев, которые вам будет необходимо обработать $$$(1 \leq t \leq 100)$$$.</P><P>Первая строка каждого тестового случая содержит целые числа $$$n$$$, $$$m$$$ и $$$k$$$&nbsp;&mdash; количество вершин и рёбер графа, а также количество доступных цветов $$$(1 \leq n \leq 30, 1 \leq m \leq 40, 1 \leq k \leq 11)$$$. Обратите внимание, что с ростом $$$n$$$ значение $$$k$$$ в тестах убывает.</P><P>Следующие $$$m$$$ строк содержат по два целых числа $$$u, v$$$, задающих рёбра графа.</P></DIV><P></P><P></P><DIV class="output-specification"><DIV class="section-title">Выходные данные</DIV><P></P><P>Для каждого тестового случая выведите единственное число&nbsp;&mdash; количество красивых раскрасок графа по модулю $$$10^9+7$$$.</P></DIV><P></P><P></P><DIV class="scoring"><DIV class="section-title">Система оценки</DIV><P></P><P>Каждый тестовый случай оценивается независимо. Правильный ответ оценивается в $$$2$$$ балла. Неправильный ответ оценивается в $$$0$$$ баллов. Балл за задачу равен сумме баллов по всем тестовым случаям.</P></DIV><P></P><P></P><DIV class="note"><DIV class="section-title">Примечание</DIV><P></P><P>Оценка за эту задачу &mdash; 50 баллов, тестирование проводится оффлайн (баллы за задачу будут известны после окончания тура).</P><P>Планарный граф&nbsp;&mdash; граф, который можно изобразить на плоскости без пересечений рёбер не по вершинам.</P><P>В тесте из условия задан следующий граф:</P><P><IMG class="tex-graphics" src="/contests_data/5/красивые_раскраски_2047_-_2/9a3c3c6636117a1134ae75648cd345fbaac28034.png"></P></DIV></DIV><P></P><P>  </P>

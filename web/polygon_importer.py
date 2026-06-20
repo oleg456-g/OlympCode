@@ -725,22 +725,48 @@ def _copy_tests(tests_src: Path, tests_dst: Path) -> None:
 
 
 def _compile_checker(task_root: Path, dest_dir: Path) -> str:
-    for name in ["checker.exe", "checker", "check.exe"]:
-        ready = task_root / name
-        if ready.exists():
-            dest_dir.mkdir(parents=True, exist_ok=True)
-            dst = dest_dir / name
-            shutil.copy2(ready, dst)
-            print(f"[polygon] Чекер скопирован: {dst}")
-            return dst.as_posix()
-
-    candidates = [
+    # Ищем .cpp исходник — он нужен всегда (для сохранения и для компиляции)
+    cpp_candidates = [
         task_root / "files" / "check.cpp",
         task_root / "checkers" / "check.cpp",
         task_root / "check.cpp",
     ]
-    check_src = next((c for c in candidates if c.exists()), None)
+    check_src = next((c for c in cpp_candidates if c.exists()), None)
+
+    # Ищем готовый бинарник
+    bin_candidates = [
+        task_root / "checker.exe", task_root / "checker",
+        task_root / "check.exe",  task_root / "files" / "check.exe",
+        task_root / "files" / "check",
+    ]
+    ready_bin = next((b for b in bin_candidates if b.exists() and b.is_file()), None)
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    # Всегда сохраняем .cpp исходник рядом с бинарником
+    if check_src:
+        shutil.copy2(check_src, dest_dir / "checker.cpp")
+        print(f"[polygon] Исходник чекера сохранён: {dest_dir / 'checker.cpp'}")
+
+    final_exe_name = "checker.exe" if os.name == "nt" else "checker"
+    checker_exe_dst = dest_dir / final_exe_name
+
+    # На Windows: если есть готовый .exe — используем его
+    if os.name == "nt" and ready_bin and ready_bin.suffix == ".exe":
+        shutil.copy2(ready_bin, checker_exe_dst)
+        print(f"[polygon] Чекер скопирован (готовый .exe): {checker_exe_dst}")
+        return checker_exe_dst.as_posix()
+
+    # На Linux или если нет .exe — компилируем из .cpp
     if not check_src:
+        # Нет ни исходника ни подходящего бинарника — пробуем скопировать Linux-бинарник
+        linux_bin = next((b for b in bin_candidates
+                          if b.exists() and b.is_file() and b.suffix != ".exe"), None)
+        if linux_bin:
+            shutil.copy2(linux_bin, checker_exe_dst)
+            checker_exe_dst.chmod(0o755)
+            print(f"[polygon] Чекер скопирован (Linux бинарник): {checker_exe_dst}")
+            return checker_exe_dst.as_posix()
         print("[polygon] Чекер не найден — будет токенное сравнение")
         return ""
 
@@ -749,9 +775,6 @@ def _compile_checker(task_root: Path, dest_dir: Path) -> str:
         if (p / "testlib.h").exists():
             testlib_dir = p
             break
-
-    final_exe_name = "checker.exe" if os.name == "nt" else "checker"
-    checker_exe_dst = dest_dir / final_exe_name
 
     with tempfile.TemporaryDirectory() as tmp_build_dir:
         tmp_build_path = Path(tmp_build_dir)
@@ -766,7 +789,6 @@ def _compile_checker(task_root: Path, dest_dir: Path) -> str:
             print(f"[polygon] Ошибка компиляции чекера:\n{result.stderr[:500]}")
             return ""
 
-        dest_dir.mkdir(parents=True, exist_ok=True)
         shutil.move(str(temp_exe), str(checker_exe_dst))
 
     print(f"[polygon] Чекер успешно скомпилирован: {checker_exe_dst}")
