@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from fastapi import APIRouter, Request, Form, Depends, BackgroundTasks
+from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -8,10 +8,6 @@ from database import get_db
 from models import Submission, Task, Verdict, ScoringType, TestResult
 from routers.auth import require_user, get_current_user
 from routers.utils import render_404, templates
-from judge.judge import judge
-from ioi_judge import judge_ioi
-from mosh_judge import judge_mosh
-from interactive_judge import judge_interactive
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -26,124 +22,10 @@ def _next_task_submission_number(db: Session, user_id: int, task_id: int) -> int
     return (last.task_submission_number + 1) if last else 1
 
 
-def _run_judge(submission_id: int) -> None:
-    from database import SessionLocal
-    db = SessionLocal()
-    try:
-        sub  = db.query(Submission).filter_by(id=submission_id).first()
-        task = db.query(Task).filter_by(id=sub.task_id).first()
-
-        sub.verdict = Verdict.RUNNING
-        db.commit()
-
-        if task.is_interactive and task.interactor_path:
-            # Интерактивный тестер — два процесса с relay
-            test_scores = json.loads(task.test_scores_json) if task.test_scores_json else []
-
-            result = judge_interactive(
-                code             = sub.code,
-                language         = sub.language,
-                tests_path       = task.tests_path,
-                time_limit       = task.time_limit,
-                memory_limit     = task.memory_limit,
-                interactor_path  = task.interactor_path,
-                checker_path     = task.checker_path,
-                test_scores      = test_scores,
-            )
-            sub.verdict        = result.verdict
-            sub.score          = result.score
-            sub.execution_time = result.execution_time
-            sub.error_output   = result.error_output
-            for t in result.tests:
-                db.add(TestResult(
-                    submission_id  = sub.id,
-                    test_number    = t.test_number,
-                    verdict        = t.verdict,
-                    execution_time = t.execution_time,
-                    score          = t.score,
-                ))
-
-        elif task.scoring_type == ScoringType.MOSH:
-            # MOSH-тестер
-            test_scores = json.loads(task.test_scores_json) if task.test_scores_json else []
-
-            result = judge_mosh(
-                code           = sub.code,
-                language       = sub.language,
-                tests_path     = task.tests_path,
-                time_limit     = task.time_limit,
-                memory_limit   = task.memory_limit,
-                checker_path   = task.checker_path,
-                test_scores    = test_scores,
-                is_output_only = task.is_output_only,
-            )
-            sub.verdict        = result.verdict
-            sub.score          = result.score
-            sub.execution_time = result.execution_time
-            sub.error_output   = result.error_output
-            for t in result.tests:
-                db.add(TestResult(
-                    submission_id  = sub.id,
-                    test_number    = t.test_number,
-                    verdict        = t.verdict,
-                    execution_time = t.execution_time,
-                    score          = t.score,
-                ))
-        elif task.scoring_type in (ScoringType.IOI_SUM, ScoringType.IOI_GROUPS):
-            # IOI-тестер
-            test_scores = json.loads(task.test_scores_json) if task.test_scores_json else []
-            subtasks    = task.subtasks if task.scoring_type == ScoringType.IOI_GROUPS else None
-
-            result = judge_ioi(
-                code         = sub.code,
-                language     = sub.language,
-                tests_path   = task.tests_path,
-                time_limit   = task.time_limit,
-                memory_limit = task.memory_limit,
-                checker_path = task.checker_path,
-                scoring_type = task.scoring_type,
-                test_scores  = test_scores,
-                subtasks     = subtasks,
-            )
-
-            sub.verdict        = result.verdict
-            sub.score          = result.score
-            sub.execution_time = result.execution_time
-            sub.error_output   = result.error_output
-
-            # Сохраняем результат по каждому тесту
-            for t in result.tests:
-                db.add(TestResult(
-                    submission_id  = sub.id,
-                    test_number    = t.test_number,
-                    verdict        = t.verdict,
-                    execution_time = t.execution_time,
-                    score          = t.score,
-                ))
-        else:
-            # ICPC-тестер
-            result = judge(
-                code         = sub.code,
-                language     = sub.language,
-                tests_path   = task.tests_path,
-                time_limit   = task.time_limit,
-                memory_limit = task.memory_limit,
-                checker_path = task.checker_path,
-            )
-            sub.verdict        = result.verdict
-            sub.failed_test    = result.failed_test
-            sub.error_output   = result.error_output
-            sub.execution_time = result.execution_time
-
-        db.commit()
-    finally:
-        db.close()
-
 
 @router.post("/submit/{task_id}")
 async def submit(
     task_id: int,
-    background_tasks: BackgroundTasks,
     request: Request,
     code:     str = Form(...),
     language: str = Form(default="cpp"),
@@ -166,8 +48,7 @@ async def submit(
     db.add(sub)
     db.commit()
     db.refresh(sub)
-
-    background_tasks.add_task(_run_judge, sub.id)
+    # Воркер (judge_worker.py) сам подхватит посылку из очереди PENDING
 
     return JSONResponse({
         "submission_id":          sub.id,

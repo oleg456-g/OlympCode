@@ -31,12 +31,53 @@ async def startup():
     from sqlalchemy import text
     Base.metadata.create_all(bind=engine)
     with engine.connect() as conn:
+        # ── Миграции contests ──────────────────────────────────────────────
         cols = conn.execute(text("PRAGMA table_info(contests)")).fetchall()
-        if not any(c[1] == "format" for c in cols):
+        col_names = {c[1] for c in cols}
+        if "format" not in col_names:
             conn.execute(text(
                 "ALTER TABLE contests ADD COLUMN format VARCHAR(16) DEFAULT 'polygon'"
             ))
-            conn.commit()
+
+        # ── Миграции tasks ─────────────────────────────────────────────────
+        cols = conn.execute(text("PRAGMA table_info(tasks)")).fetchall()
+        col_names = {c[1] for c in cols}
+
+        task_migrations = [
+            ("is_output_only",  "INTEGER NOT NULL DEFAULT 0"),
+            ("is_interactive",  "INTEGER NOT NULL DEFAULT 0"),
+            ("interactor_path", "VARCHAR(512)"),
+        ]
+        for col, typedef in task_migrations:
+            if col not in col_names:
+                conn.execute(text(f"ALTER TABLE tasks ADD COLUMN {col} {typedef}"))
+
+        # ── Миграции subtasks ──────────────────────────────────────────────
+        cols = conn.execute(text("PRAGMA table_info(subtasks)")).fetchall()
+        col_names = {c[1] for c in cols}
+        if "depends_on_json" not in col_names:
+            conn.execute(text("ALTER TABLE subtasks ADD COLUMN depends_on_json TEXT"))
+
+        conn.commit()
+
+    # Сбрасываем все RUNNING → PENDING: если сервер упал во время тестирования,
+    # посылки не зависнут навсегда — воркер подхватит их при следующем старте
+    db = SessionLocal()
+    try:
+        from models import Submission, Verdict
+        stuck = db.query(Submission).filter(Submission.verdict == Verdict.RUNNING).all()
+        if stuck:
+            print(f"[startup] Найдено {len(stuck)} зависших посылок (RUNNING) — сбрасываем в PENDING")
+            for s in stuck:
+                s.verdict = Verdict.PENDING
+            db.commit()
+    finally:
+        db.close()
+
+    # Запускаем персистентный воркер очереди тестирования
+    from judge_worker import start_judge_worker
+    start_judge_worker()
+    print("[startup] Воркер очереди тестирования запущен")
     db = SessionLocal()
     try:
         import_all(db)
