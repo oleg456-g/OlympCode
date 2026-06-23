@@ -120,16 +120,35 @@
     <h3 style="font-size:13px; font-weight:600; color:var(--text-3); margin-bottom:8px; text-transform:uppercase; letter-spacing:.05em">
       Код решения
     </h3>
-    <div class="code-block">{{ sub.code }}</div>
+    <div id="code-viewer"></div>
   </div>
 
 </div>
 {% endblock %}
 
 {% block scripts %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script>
+const cmModes = { cpp: 'text/x-c++src', python: 'text/x-python', text: 'text/plain' };
+const lang    = {{ sub.language | tojson }};
+const code    = {{ sub.code | tojson }};
+
+const viewer = CodeMirror(document.getElementById('code-viewer'), {
+  value:       code,
+  mode:        cmModes[lang] || 'text/plain',
+  theme:       'dracula',
+  lineNumbers: true,
+  readOnly:    true,
+  viewportMargin: Infinity,
+});
+</script>
+
 {% if sub.verdict.value in ['PENDING', 'RUNNING'] %}
 <script>
-  // Polling пока вердикт не финальный
   const FINAL = ['AC','WA','TLE','MLE','RE','CE'];
   const subId = {{ sub.id }};
 
@@ -137,16 +156,13 @@
     try {
       const res = await fetch(`/submissions/status/${subId}`);
       const data = await res.json();
-
       if (FINAL.includes(data.verdict)) {
-        // Перезагружаем страницу чтобы показать полную инфу и тесты
         location.reload();
         return;
       }
     } catch (e) {}
     setTimeout(poll, 1500);
   }
-
   setTimeout(poll, 1500);
 </script>
 {% endif %}

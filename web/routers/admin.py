@@ -5,9 +5,11 @@
 """
 
 import asyncio
+import io
 import os
 import shutil
 import tempfile
+import zipfile
 from pathlib import Path
 
 from fastapi import APIRouter, Request, Form, UploadFile, File, Depends
@@ -352,6 +354,7 @@ async def task_edit_page(task_id: int, request: Request, db: Session = Depends(g
             rel = item.relative_to(data_dir)
             file_tree.append({
                 "path":     str(rel).replace("\\", "/"),
+                "rel_path": str(rel).replace("\\", "/"),
                 "basename": item.name,
                 "is_dir":   item.is_dir(),
                 "size":     item.stat().st_size if item.is_file() else 0,
@@ -459,6 +462,237 @@ async def save_test_content(task_id: int, test_name: str, request: Request,
         ans_file.write_text(ans_text, encoding="utf-8")
 
     return JSONResponse({"ok": True})
+
+
+# ── Видимость контеста ───────────────────────────────────────────────────────
+@router.post("/contest/{contest_id}/toggle-visibility")
+async def toggle_contest_visibility(
+    contest_id: int,
+    request:    Request,
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+    contest = db.query(Contest).filter_by(id=contest_id).first()
+    if not contest:
+        return JSONResponse({"error": "not found"}, status_code=404)
+    contest.is_visible = not contest.is_visible
+    db.commit()
+    return JSONResponse({"is_visible": contest.is_visible})
+
+
+# ── Скачать файл/папку задачи как ZIP ────────────────────────────────────────
+@router.get("/task/{task_id}/download/{what}")
+async def download_task_archive(
+    task_id: int,
+    what:    str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """what: tests | checker | solutions | interactor | statement | file/<filename>"""
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    task_dir = Path(task.tests_path).parent if task.tests_path else None
+    buf = io.BytesIO()
+
+    if what == "tests":
+        src = Path(task.tests_path) if task.tests_path else None
+        if not src or not src.exists():
+            return JSONResponse({"error": "Папка тестов не найдена"}, status_code=404)
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in sorted(src.iterdir()):
+                if f.is_file():
+                    zf.write(f, f.name)
+        fname = f"task{task_id}_tests.zip"
+
+    elif what == "checker":
+        files = []
+        if task_dir:
+            for name in ("checker.cpp", "checker.exe", "checker"):
+                p = task_dir / name
+                if p.exists():
+                    files.append(p)
+        if task.checker_path:
+            p = Path(task.checker_path)
+            if p.exists() and p not in files:
+                files.append(p)
+        if not files:
+            return JSONResponse({"error": "Чекер не найден"}, status_code=404)
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in files:
+                zf.write(f, f.name)
+        fname = f"task{task_id}_checker.zip"
+
+    elif what == "solutions":
+        src = task_dir / "solutions" if task_dir else None
+        if not src or not src.exists():
+            return JSONResponse({"error": "Папка решений не найдена"}, status_code=404)
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in sorted(src.iterdir()):
+                if f.is_file():
+                    zf.write(f, f.name)
+        fname = f"task{task_id}_solutions.zip"
+
+    elif what == "interactor":
+        if not task.interactor_path or not Path(task.interactor_path).exists():
+            return JSONResponse({"error": "Интерактор не найден"}, status_code=404)
+        p = Path(task.interactor_path)
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.write(p, p.name)
+        fname = f"task{task_id}_interactor.zip"
+
+    elif what == "statement":
+        if not task_dir or not task_dir.exists():
+            return JSONResponse({"error": "Папка задачи не найдена"}, status_code=404)
+        html = task_dir / "problem.html"
+        if not html.exists():
+            return JSONResponse({"error": "Условие не найдено"}, status_code=404)
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.write(html, "problem.html")
+            for ext in ("*.png", "*.jpg", "*.jpeg", "*.gif", "*.svg"):
+                for img in task_dir.glob(ext):
+                    zf.write(img, img.name)
+        fname = f"task{task_id}_statement.zip"
+
+    else:
+        return JSONResponse({"error": "Неизвестный тип"}, status_code=400)
+
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{fname}"'},
+    )
+
+
+# ── Скачать конкретный файл из папки задачи ───────────────────────────────────
+@router.get("/task/{task_id}/file/{filename:path}")
+async def download_task_file(
+    task_id:  int,
+    filename: str,
+    request:  Request,
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    task_dir = Path(task.tests_path).parent if task.tests_path else None
+    if not task_dir:
+        return JSONResponse({"error": "Папка задачи не найдена"}, status_code=404)
+
+    # Защита от path traversal
+    target = (task_dir / filename).resolve()
+    if not str(target).startswith(str(task_dir.resolve())):
+        return JSONResponse({"error": "Доступ запрещён"}, status_code=403)
+
+    if not target.exists() or not target.is_file():
+        return JSONResponse({"error": "Файл не найден"}, status_code=404)
+
+    import mimetypes
+    mime, _ = mimetypes.guess_type(str(target))
+    mime = mime or "application/octet-stream"
+
+    return StreamingResponse(
+        open(target, "rb"),
+        media_type=mime,
+        headers={"Content-Disposition": f'attachment; filename="{target.name}"'},
+    )
+
+
+# ── Посылки пользователей (для страницы в админке) ────────────────────────────
+@router.get("/submissions")
+async def admin_submissions(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    # Читаем параметры вручную чтобы пустые строки не вызывали 422
+    qp = request.query_params
+    def _int(key):
+        v = qp.get(key, "").strip()
+        try: return int(v) if v else None
+        except: return None
+    page       = max(1, _int("page") or 1)
+    contest_id = _int("contest_id")
+    user_id    = _int("user_id")
+    verdict    = qp.get("verdict", "").strip() or None
+    from models import Submission, User
+    user = _require_admin(request, db)
+    if not user:
+        return RedirectResponse("/auth/login")
+
+    PAGE_SIZE = 50
+    q = db.query(Submission).join(Submission.user).join(Submission.task)
+
+    if contest_id:
+        from models import ContestTask
+        task_ids = [ct.task_id for ct in db.query(ContestTask).filter_by(contest_id=contest_id).all()]
+        q = q.filter(Submission.task_id.in_(task_ids))
+    if user_id:
+        q = q.filter(Submission.user_id == user_id)
+    if verdict:
+        from models import Verdict as V
+        q = q.filter(Submission.verdict == V(verdict))
+
+    total  = q.count()
+    subs   = q.order_by(Submission.submitted_at.desc()).offset((page-1)*PAGE_SIZE).limit(PAGE_SIZE).all()
+    contests = db.query(Contest).order_by(Contest.created_at.desc()).all()
+    users    = db.query(User).order_by(User.username).all()
+
+    return templates.TemplateResponse("admin/submissions.html", {
+        "request":    request,
+        "user":       user,
+        "subs":       subs,
+        "contests":   contests,
+        "users":      users,
+        "page":       page,
+        "total":      total,
+        "page_size":  PAGE_SIZE,
+        "contest_id": contest_id,
+        "user_id":    user_id,
+        "verdict_filter": verdict,
+    })
+
+
+@router.post("/task/{task_id}/update-limits")
+async def update_task(
+    task_id:      int,
+    request:      Request,
+    title:        str   = Form(...),
+    time_limit:   float = Form(...),
+    memory_limit: int   = Form(...),
+    db: Session         = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if not user:
+        return JSONResponse({"error": "no access"}, status_code=403)
+
+    task = db.query(Task).filter_by(id=task_id).first()
+    if not task:
+        return JSONResponse({"error": "not found"}, status_code=404)
+
+    if time_limit <= 0 or memory_limit <= 0:
+        return RedirectResponse(
+            f"/admin/task/{task_id}?error=Некорректные значения TL/ML", status_code=303
+        )
+    if title.strip():
+        task.title    = title.strip()
+    task.time_limit   = round(time_limit, 3)
+    task.memory_limit = memory_limit
+    db.commit()
+    return RedirectResponse(
+        f"/admin/task/{task_id}?ok=Лимиты обновлены: {time_limit}с / {memory_limit}МБ",
+        status_code=303,
+    )
 
 
 @router.post("/task/{task_id}/upload-checker")

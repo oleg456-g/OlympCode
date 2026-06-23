@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Посылки пользователей — Админка{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+  <a href="/admin/">Админка</a>
+  <span>›</span>
+  <span>Посылки</span>
+</div>
+
+<div class="page-header">
+  <h1>Посылки пользователей</h1>
+  <p style="color:var(--text-3)">Всего найдено: {{ total }}</p>
+</div>
+
+<!-- Фильтры -->
+<div class="card" style="margin-bottom:20px">
+  <form method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end">
+    <div class="form-group" style="margin:0; min-width:200px">
+      <label style="font-size:12px">Контест</label>
+      <select class="lang-select" name="contest_id" style="width:100%; padding:8px 12px">
+        <option value="">Все контесты</option>
+        {% for c in contests %}
+          <option value="{{ c.id }}" {% if contest_id == c.id %}selected{% endif %}>
+            {{ c.title }} {% if c.year %}({{ c.year }}){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin:0; min-width:160px">
+      <label style="font-size:12px">Пользователь</label>
+      <select class="lang-select" name="user_id" style="width:100%; padding:8px 12px">
+        <option value="">Все</option>
+        {% for u in users %}
+          <option value="{{ u.id }}" {% if user_id == u.id %}selected{% endif %}>{{ u.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group" style="margin:0">
+      <label style="font-size:12px">Вердикт</label>
+      <select class="lang-select" name="verdict" style="width:120px; padding:8px 12px">
+        <option value="">Любой</option>
+        {% for v in ['AC','WA','TLE','MLE','RE','CE','PENDING','RUNNING'] %}
+          <option value="{{ v }}" {% if verdict_filter == v %}selected{% endif %}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="btn btn--primary" type="submit">Фильтровать</button>
+    <a href="/admin/submissions" class="btn btn--outline">Сбросить</a>
+  </form>
+</div>
+
+<!-- Таблица посылок -->
+<div class="card" style="padding:0; overflow:hidden">
+  <table style="width:100%; border-collapse:collapse; font-size:13px">
+    <thead>
+      <tr style="background:var(--bg-sidebar); border-bottom:1px solid var(--border)">
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)">#</th>
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)">Пользователь</th>
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)">Задача</th>
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)">Язык</th>
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)">Вердикт</th>
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)">Баллы</th>
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)">Время</th>
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)">Отправлено</th>
+        <th style="padding:10px 14px; text-align:left; font-weight:600; color:var(--text-2)"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in subs %}
+      <tr style="border-bottom:1px solid var(--border-light,var(--border))">
+        <td style="padding:9px 14px; color:var(--text-3); font-family:var(--mono)">{{ s.id }}</td>
+        <td style="padding:9px 14px">
+          <a href="/admin/submissions?user_id={{ s.user.id }}" style="color:var(--blue)">{{ s.user.username }}</a>
+        </td>
+        <td style="padding:9px 14px">
+          <a href="/admin/task/{{ s.task.id }}" style="color:var(--text-1)">{{ s.task.title }}</a>
+        </td>
+        <td style="padding:9px 14px; font-family:var(--mono); font-size:12px; color:var(--text-3)">{{ s.language }}</td>
+        <td style="padding:9px 14px">
+          <span class="badge badge--{{ s.verdict.value.lower() }}">{{ s.verdict.value }}</span>
+        </td>
+        <td style="padding:9px 14px; font-family:var(--mono); font-size:12px">
+          {% if s.score is not none %}{{ s.score | round(1) }}{% else %}—{% endif %}
+        </td>
+        <td style="padding:9px 14px; font-family:var(--mono); font-size:12px; color:var(--text-3)">
+          {% if s.execution_time %}{{ s.execution_time | round(2) }}с{% else %}—{% endif %}
+        </td>
+        <td style="padding:9px 14px; font-size:12px; color:var(--text-3); white-space:nowrap">
+          {{ s.submitted_at.strftime('%d.%m %H:%M') }}
+        </td>
+        <td style="padding:9px 14px">
+          <a href="/submissions/{{ s.id }}" class="btn btn--outline btn--small" style="font-size:11px; padding:2px 8px">
+            Подробнее
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="9" style="padding:24px; text-align:center; color:var(--text-3)">Посылок не найдено</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Пагинация -->
+{% set total_pages = ((total - 1) // page_size + 1) if total > 0 else 1 %}
+{% if total_pages > 1 %}
+<div style="display:flex; gap:6px; justify-content:center; margin-top:20px; flex-wrap:wrap">
+  {% for p in range(1, total_pages + 1) %}
+    {% if p == page %}
+      <span class="btn btn--primary btn--small" style="min-width:36px; text-align:center">{{ p }}</span>
+    {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+      <a href="?page={{ p }}{% if contest_id %}&contest_id={{ contest_id }}{% endif %}{% if user_id %}&user_id={{ user_id }}{% endif %}{% if verdict_filter %}&verdict={{ verdict_filter }}{% endif %}"
+         class="btn btn--outline btn--small" style="min-width:36px; text-align:center">{{ p }}</a>
+    {% elif p == page - 3 or p == page + 3 %}
+      <span style="padding:4px 2px; color:var(--text-3)">…</span>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}

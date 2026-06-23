@@ -8,11 +8,18 @@
   <span>{{ contest.title }}</span>
 </div>
 
-<div class="page-header">
-  <h1>{{ contest.title }}</h1>
-  <p>{{ contest.year or '' }}
-    {% if contest.format.value == 'mosh' %} · <span style="color:var(--blue)">МОШ</span>{% endif %}
-    · <a href="/contests/{{ contest.id }}">Смотреть на сайте →</a></p>
+<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px">
+  <div>
+    <h1 style="margin:0">{{ contest.title }}</h1>
+    <p style="margin:4px 0 0">{{ contest.year or "" }}
+      {% if contest.format.value == "mosh" %} · <span style="color:var(--blue)">МОШ</span>{% endif %}
+      · <a href="/contests/{{ contest.id }}">Смотреть на сайте →</a></p>
+  </div>
+  <button id="visibility-btn" onclick="toggleVisibility()"
+          class="btn {% if contest.is_visible %}btn--primary{% else %}btn--outline{% endif %}"
+          style="white-space:nowrap; min-width:160px">
+    {% if contest.is_visible %}👁 Виден пользователям{% else %}🚫 Скрыт от пользователей{% endif %}
+  </button>
 </div>
 
 {% if request.query_params.get('ok') %}
@@ -428,5 +435,26 @@ submitUploadForm(
   `/admin/contest/${CONTEST_ID}/upload-mosh`,
   'upload-btn-mosh'
 );
+
+async function toggleVisibility() {
+  const btn = document.getElementById('visibility-btn');
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/admin/contest/${CONTEST_ID}/toggle-visibility`, {method:'POST'});
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    if (data.is_visible) {
+      btn.textContent = '👁 Виден пользователям';
+      btn.className = 'btn btn--primary';
+    } else {
+      btn.textContent = '🚫 Скрыт от пользователей';
+      btn.className = 'btn btn--outline';
+    }
+  } catch(e) {
+    alert('Ошибка: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
 </script>
 {% endblock %}

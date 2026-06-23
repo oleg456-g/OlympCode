@@ -13,7 +13,11 @@ router = APIRouter(prefix="/contests", tags=["contests"])
 @router.get("/")
 async def contests_list(request: Request, db: Session = Depends(get_db)):
     user     = get_current_user(request, db)
-    contests = db.query(Contest).order_by(Contest.year.desc(), Contest.title).all()
+    # Обычные пользователи видят только видимые контесты
+    if user and getattr(user, 'is_admin', False):
+        contests = db.query(Contest).order_by(Contest.year.desc(), Contest.title).all()
+    else:
+        contests = db.query(Contest).filter_by(is_visible=True).order_by(Contest.year.desc(), Contest.title).all()
 
     return templates.TemplateResponse("contests/index.html", {
         "request":  request,

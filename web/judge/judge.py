@@ -22,64 +22,45 @@ def judge(
     language: str,
     tests_path: str,
     time_limit: float,
-    memory_limit: int,   # пока не используем без Docker, но храним для совместимости
+    memory_limit: int,
     checker_path: str,
+    on_test_start=None,
 ) -> JudgeResult:
     with tempfile.TemporaryDirectory() as tmpdir:
         if language == "cpp":
-            return _judge_cpp(code, tests_path, time_limit, tmpdir, checker_path)
+            return _judge_cpp(code, tests_path, time_limit, tmpdir, checker_path, on_test_start)
         elif language == "python":
-            return _judge_python(code, tests_path, time_limit, tmpdir, checker_path)
+            return _judge_python(code, tests_path, time_limit, tmpdir, checker_path, on_test_start)
         else:
             return JudgeResult(Verdict.CE, error_output=f"Язык не поддерживается: {language}")
 
 
 # ── C++ ──────────────────────────────────────────────────────────────────────
 
-def _judge_cpp(code: str, tests_path: str, time_limit: float, tmpdir: str, checker_path: str) -> JudgeResult:
+def _judge_cpp(code, tests_path, time_limit, tmpdir, checker_path, on_test_start=None):
     src = os.path.join(tmpdir, "solution.cpp")
     exe = os.path.join(tmpdir, "solution")
-    
-    # Для Windows g++ добавляет расширение .exe автоматически
     if os.name == 'nt':
         exe += ".exe"
-
     with open(src, "w", encoding="utf-8") as f:
         f.write(code)
-
-    # Компиляция
     compile_result = subprocess.run(
         ["g++", "-O2", "-std=c++20", "-o", exe, src],
         capture_output=True, text=True, timeout=30
     )
     if compile_result.returncode != 0:
-        return JudgeResult(
-            Verdict.CE,
-            error_output=compile_result.stderr[:4096]
-        )
-
-    return _run_tests(exe, None, tests_path, time_limit, tmpdir, checker_path)
+        return JudgeResult(Verdict.CE, error_output=compile_result.stderr[:4096])
+    return _run_tests(exe, None, tests_path, time_limit, tmpdir, checker_path, on_test_start)
 
 
-# ── Python ───────────────────────────────────────────────────────────────────
-
-def _judge_python(code: str, tests_path: str, time_limit: float, tmpdir: str, checker_path: str | None) -> JudgeResult:
+def _judge_python(code, tests_path, time_limit, tmpdir, checker_path, on_test_start=None):
     src = os.path.join(tmpdir, "solution.py")
     with open(src, "w", encoding="utf-8") as f:
         f.write(code)
-    return _run_tests(None, src, tests_path, time_limit, tmpdir, checker_path)
+    return _run_tests(None, src, tests_path, time_limit, tmpdir, checker_path, on_test_start)
 
 
-# ── Общий прогон тестов ──────────────────────────────────────────────────────
-
-def _run_tests(
-    exe: str | None, 
-    py_src: str | None, 
-    tests_path: str, 
-    time_limit: float, 
-    tmpdir: str,
-    checker_path: str | None
-) -> JudgeResult:
+def _run_tests(exe, py_src, tests_path, time_limit, tmpdir, checker_path, on_test_start=None):
     tests_dir = Path(tests_path)
     if not tests_dir.exists():
         return JudgeResult(Verdict.RE, error_output=f"Папка тестов не найдена: {tests_path}")
@@ -96,8 +77,6 @@ def _run_tests(
     python_bin = "python" if os.name == "nt" else "python3"
     cmd = [exe] if exe else [python_bin, py_src]
     elapsed_time = 0.0
-    test_num = 0  # инициализируем до цикла — return после цикла не упадёт
-                  # если все тесты пропущены (нет .ans/.out файлов)
     for in_file in in_files:
         # У большинства платформ эталонный ответ — это *.ans или *.out. 
         # Проверим оба варианта, чтобы не падать
@@ -108,6 +87,12 @@ def _run_tests(
             continue
 
         test_num = int(in_file.stem) if in_file.stem.isdigit() else 0
+
+        if on_test_start:
+            try:
+                on_test_start(test_num)
+            except Exception:
+                pass
 
         # Запуск решения участника
         with open(in_file, "r", encoding="utf-8") as f_in:
@@ -172,9 +157,6 @@ def _run_tests(
             if not _compare(actual, expected):
                 return JudgeResult(Verdict.WA, failed_test=test_num, execution_time=elapsed_time)
 
-    if test_num == 0:
-        # Ни один тест не был прогнан (нет .ans/.out файлов)
-        return JudgeResult(Verdict.RE, error_output="Не найдено тестов с эталонными ответами (.ans/.out)")
     return JudgeResult(Verdict.AC, failed_test=test_num, execution_time=elapsed_time)
 
 

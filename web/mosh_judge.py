@@ -136,34 +136,67 @@ def _judge_output_only(
 
 
 def compute_test_max_scores(checker_path: str, all_tests: list[str], tests_path: str) -> list[float]:
-    """Считает максимум баллов за каждый тест, подставляя ans как ответ участника."""
+    """
+    Считает максимум баллов за каждый тест, подставляя ans как ответ участника.
+    
+    Важно: список возвращается по всем тестам на диске (включая samples),
+    а не только по тестам из all_tests. Samples получают балл 0 — они не
+    засчитываются участнику, но обязаны присутствовать в списке чтобы
+    индекс test_num-1 совпадал с позицией в test_scores.
+    """
     if not checker_path or not os.path.exists(checker_path):
         return []
 
     tests_dir = Path(tests_path)
     in_files = _list_input_files(tests_dir)
+    
+    # Нормализуем all_tests в set для быстрого поиска
+    # Поддерживаем оба формата: 'tests/04' и просто '04'
+    scoring_paths: set[str] = set()
+    for input_path, _ in all_tests:
+        if input_path:
+            scoring_paths.add(input_path)
+            # Добавляем и короткий вариант (только имя файла без папки)
+            scoring_paths.add(Path(input_path).name)
+
     scores: list[float] = []
-
+    
     with tempfile.TemporaryDirectory() as tmpdir:
-
         for in_file in in_files:
             p = Path(in_file)
-            current_test_path = f"{p.parent.name}/{p.stem}"
-            is_found = any(current_test_path == input_path for input_path, _ in all_tests)
-            if not is_found:
+            # Проверяем что тест входит в scoring набор (не sample)
+            full_path  = f"{p.parent.name}/{p.stem}"   # 'tests/04'
+            short_path = p.stem if p.suffix else p.name # '04'
+            
+            is_scoring = full_path in scoring_paths or short_path in scoring_paths
+            
+            if not is_scoring:
+                # Sample тест — в баллах не участвует, ставим 0
+                scores.append(0.0)
                 continue
 
             out_file = _answer_file(in_file)
             if not out_file:
                 scores.append(0.0)
                 continue
+            
             team_out = os.path.join(tmpdir, "team.out")
             shutil_copy(out_file, team_out)
+            # Для quitp-чекеров (MOSH): earned содержит реальный балл независимо
+            # от test_max. Для обычных OK/WA чекеров earned = test_max при rc=0,
+            # поэтому передаём 0.0 — тогда rc=0 вернёт 0.0 (не используется для
+            # compute, нас интересует только earned из quitp).
+            # Если rc=0 (не quitp), считаем балл как 1.0 — тест пройден засчитан.
             earned, verdict = _run_checker(checker_path, in_file, team_out, out_file, 0.0)
             if verdict == Verdict.RE:
                 scores.append(0.0)
+            elif verdict == Verdict.AC and earned == 0.0:
+                # rc=0 (обычный OK чекер без quitp) — тест пройден, но балл неизвестен
+                # В этом контексте используем 1.0 как "тест засчитан"
+                scores.append(1.0)
             else:
                 scores.append(earned)
+
     return scores
 
 

@@ -1,0 +1,65 @@
+<p>
+Знайка ввёл в Цветочном городе <em>буквенную систему счисления</em> — позиционную систему с основанием 52, в которой цифрами служат заглавные и строчные латинские буквы. Таблица цифр:
+</p>
+<img src="/contests_data/9/незнайка_и_недосортировка__11_класс/table1.png"/><br/>
+<p>
+Пример: 2025<sub>10</sub> = 38·52<sup>1</sup> + 49·52<sup>0</sup> = <code>mx</code>.
+</p>
+<p>
+Все стали пользоваться буквенной системой счисления, кроме Незнайки. Он разрешил <em>переполнять разряды</em> — записывать в них цифры со значениями, превышающими 51, оставив основание 52. Незнайка дополнил таблицу цифр с помощью модификаторов:
+</p>
+<ul>
+<li><code>^</code> (крышка) — добавляет 52 к значению буквы: <code>A^</code>&nbsp;=&nbsp;52, <code>B^</code>&nbsp;=&nbsp;53, …, <code>z^</code>&nbsp;=&nbsp;103</li>
+<li><code>~</code> (волна) — добавляет 104: <code>A~</code>&nbsp;=&nbsp;104, <code>B~</code>&nbsp;=&nbsp;105, …, <code>z~</code>&nbsp;=&nbsp;155</li>
+<li><code>_</code> (подчёркивание) — добавляет 156: <code>A_</code>&nbsp;=&nbsp;156, <code>B_</code>&nbsp;=&nbsp;157, …, <code>z_</code>&nbsp;=&nbsp;207</li>
+</ul>
+<img src="/contests_data/9/незнайка_и_недосортировка__11_класс/table2.png"/><br/>
+<p>
+Таким образом, одно и то же число можно записать по-разному. Например:
+</p>
+<img src="/contests_data/9/незнайка_и_недосортировка__11_класс/example.png"/><br/>
+<p>
+(здесь <code>mx</code>: 38·52+49, <code>lx^</code>: 37·52+101, <code>kx~</code>: 36·52+153, <code>jx_</code>: 35·52+205)
+</p>
+<p>
+Знайка предложил Незнайке отсортировать по убыванию последовательность различных чисел в модифицированной системе. Незнайка допустил ровно одну ошибку: в последовательности <i>A</i>[<i>i</i>] нашлась одна пара элементов <i>A</i>[<i>i</i><sub>1</sub>] и <i>A</i>[<i>i</i><sub>2</sub>] (<i>i</i><sub>1</sub> ≠ <i>i</i><sub>2</sub>), стоящих не на своих местах. После обмена местами <i>A</i>[<i>i</i><sub>1</sub>] и <i>A</i>[<i>i</i><sub>2</sub>] последовательность становится убывающей.
+</p>
+<p>
+Найдите пару индексов для обмена. Во вводе буква с крышкой задаётся двумя символами: <code>A^</code>&nbsp;— «A с крышкой» (значение 52). Буква с волной: <code>B~</code>&nbsp;— «B с волной» (значение 105). Буква с подчёркиванием: <code>C_</code>&nbsp;— «C с подчёркиванием» (значение 158).
+</p>
+<h3>Формат ввода</h3>
+<p>В первой строке вводится натуральное число <i>N</i>: 1 &lt; <i>N</i> &lt; 501. В следующих <i>N</i> строках содержатся записи различных неотрицательных чисел <i>A</i>[<i>i</i>] (<i>i</i>&nbsp;=&nbsp;1..<i>N</i>) в модифицированной системе счисления. В каждой записи используются только заглавные и/или строчные латинские буквы, крышка <code>^</code>, волна <code>~</code>, подчёркивание <code>_</code>. Длина каждой записи не более 50 символов.</p>
+<h3>Формат вывода</h3>
+<p>В единственной строке выводятся искомые номера <i>i</i><sub>1</sub> и <i>i</i><sub>2</sub> (<i>i</i><sub>1</sub> &lt; <i>i</i><sub>2</sub>), разделённые одиночным пробелом. Нумерация с единицы.</p>
+
+<div class="example">
+  <div class="example__cols">
+    <div><div class="example__label">Ввод</div><pre class="example__pre">5
+B
+jw_
+D
+kx~
+A</pre></div>
+    <div><div class="example__label">Вывод</div><pre class="example__pre">1 4</pre></div>
+  </div>
+</div>
+
+<div class="example">
+  <div class="example__cols">
+    <div><div class="example__label">Ввод</div><pre class="example__pre">4
+m_x_
+m^x^
+m~x~
+mx</pre></div>
+    <div><div class="example__label">Вывод</div><pre class="example__pre">2 3</pre></div>
+  </div>
+</div>
+
+<div class="example">
+  <div class="example__cols">
+    <div><div class="example__label">Ввод</div><pre class="example__pre">2
+abcdrfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
+abcdrfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWY</pre></div>
+    <div><div class="example__label">Вывод</div><pre class="example__pre">1 2</pre></div>
+  </div>
+</div>

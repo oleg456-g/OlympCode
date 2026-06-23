@@ -13,7 +13,7 @@ from pathlib import Path
 
 from sqlalchemy.orm import Session
 
-from models import Task, ContestTask, ScoringType
+from models import Task, ContestTask, Subtask, ScoringType
 from mosh_judge import compute_test_max_scores
 from polygon_importer import (
     CONTESTS_DATA_DIR,
@@ -24,38 +24,65 @@ from polygon_importer import (
 )
 
 _ASSET_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp"}
-_TASK_DIR_RE = re.compile(r"^[A-Fa-f]\d+$")
+_TASK_DIR_RE = re.compile(r"^[A-Za-z]\d?$")
 
 
 def import_mosh_contest_zip(
     zip_path: str | Path,
     contest_id: int,
     db: Session,
+    progress_cb=None,
 ) -> list[Task]:
     """Импортирует все задачи из архива МОШ."""
     zip_path = Path(zip_path)
     imported: list[Task] = []
+
+    def _report(pct: int, msg: str):
+        if progress_cb:
+            progress_cb(pct, msg)
+
+    _report(5, "Распаковка архива МОШ...")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
         with zipfile.ZipFile(zip_path, "r") as zf:
             zf.extractall(tmpdir)
 
+        _report(10, "Поиск задач в архиве...")
+
         task_dirs = _find_mosh_task_dirs(tmpdir)
         if not task_dirs:
             raise ValueError("В архиве не найдены задачи МОШ (папки A1, B2, ...)")
 
+        _report(15, f"Найдено задач: {len(task_dirs)}. Начинаю импорт...")
+
+        total = len(task_dirs)
         for order, task_dir in enumerate(task_dirs, start=1):
             letter = task_dir.name.upper()
+
+            # Прогресс: от 15% до 95% распределяем между задачами
+            task_start_pct = 15 + int((order - 1) / total * 80)
+            task_end_pct   = 15 + int(order / total * 80)
+
+            def make_task_cb(start, end):
+                def cb(pct, msg):
+                    # Масштабируем прогресс задачи в общий прогресс
+                    scaled = start + int(pct / 100 * (end - start))
+                    _report(scaled, f"[{letter}] {msg}")
+                return cb
+
             task = _import_mosh_task_dir(
                 task_dir=task_dir,
                 contest_id=contest_id,
                 letter=letter,
                 order=order,
                 db=db,
+                progress_cb=make_task_cb(task_start_pct, task_end_pct),
             )
             imported.append(task)
+            _report(task_end_pct, f"✓ {letter}: {task.title}")
 
+    _report(98, f"Завершение импорта {len(imported)} задач...")
     return imported
 
 
@@ -136,11 +163,11 @@ def _import_mosh_task_dir(
     pm = meta.get("problemMetadata") or {}
     testSets = pm.get("testSets") or {}
     
-    target_names = ["tests", "All tests"]
+    target_names = ["samples"]
 
     all_tests = [
         (test.get("inputPath"), test.get("answerPath"))
-        for test_set in testSets if test_set.get("name") in target_names
+        for test_set in testSets if test_set.get("name") not in target_names
         for test in test_set.get("matchedTests", [])
     ]
 
@@ -212,8 +239,26 @@ def _import_mosh_task_dir(
 
     _report(70, "Подсчёт максимальных баллов по тестам...")
 
-    test_scores = compute_test_max_scores(checker_path, all_tests, tests_dst.as_posix())
+    # Новый формат MOSH 2026: testGroupsScoringSettings.json явно задаёт
+    # балл за каждую группу тестов. Если файл есть — анализируем его чтобы
+    # определить scoring_type и построить Subtask (для IOI_GROUPS).
+    # Иначе fallback на вычисление через checker (старый формат = ScoringType.MOSH).
+    scoring_file = task_dir / "testGroupsScoringSettings.json"
+    subtasks_data = []  # список dict для создания Subtask в БД
+
+    if scoring_file.exists():
+        test_scores, scoring_type, subtasks_data = _analyze_scoring_settings(
+            scoring_file, testSets
+        )
+    else:
+        test_scores   = compute_test_max_scores(checker_path, all_tests, tests_dst.as_posix())
+        scoring_type  = ScoringType.MOSH
+
     max_score = sum(test_scores)
+    # Для IOI_GROUPS реальный максимум — сумма max_score всех Subtask
+    # (test_scores для complete-group групп содержит нули)
+    if scoring_type == ScoringType.IOI_GROUPS and subtasks_data:
+        max_score = sum(st["max_score"] for st in subtasks_data)
     test_scores_json = json.dumps(test_scores)
 
     _report(85, "Сохранение в базу данных...")
@@ -231,13 +276,25 @@ def _import_mosh_task_dir(
         memory_limit     = memory_limit,
         tests_path       = tests_dst.as_posix(),
         checker_path     = checker_path,
-        scoring_type     = ScoringType.MOSH,
+        scoring_type     = scoring_type,
         max_score        = max_score,
         test_scores_json = test_scores_json,
         is_output_only   = is_output_only,
     )
     db.add(task)
     db.flush()
+
+    # Создаём Subtask для IOI_GROUPS задач
+    if scoring_type == ScoringType.IOI_GROUPS and subtasks_data:
+        for st in subtasks_data:
+            db.add(Subtask(
+                task_id         = task.id,
+                number          = st["number"],
+                max_score       = st["max_score"],
+                test_from       = st["test_from"],
+                test_to         = st["test_to"],
+                depends_on_json = json.dumps(st["depends_on"]) if st["depends_on"] else None,
+            ))
 
     existing = db.query(ContestTask).filter_by(contest_id=contest_id, letter=letter).first()
     if existing:
@@ -255,8 +312,121 @@ def _import_mosh_task_dir(
 
     _report(95, f"Финализация «{title}»...")
 
-    print(f"[mosh] Импортировано: '{title}' → контест {contest_id}, {letter}, max={max_score}")
+    print(f"[mosh] Импортировано: '{title}' → контест {contest_id}, {letter}, scoring={scoring_type}, max={max_score}")
     return task
+
+
+def _analyze_scoring_settings(
+    scoring_file: Path, testSets: list
+) -> tuple[list[float], "ScoringType", list[dict]]:
+    """
+    Читает testGroupsScoringSettings.json и возвращает:
+      - test_scores: балл за каждый тест в порядке как они лежат на диске
+      - scoring_type: MOSH (each-test для всех) или IOI_GROUPS (есть complete-group)
+      - subtasks_data: список dict для создания Subtask (только для IOI_GROUPS)
+
+    Форматы групп в settings:
+      full_score (complete-group): баллы только если вся группа прошла
+      test_score (each-test): балл за каждый пройденный тест независимо
+      
+    Зависимости в depends ссылаются на поле name (не testset).
+    """
+    try:
+        settings = json.loads(scoring_file.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"[mosh] Ошибка чтения testGroupsScoringSettings.json: {e}")
+        return [], ScoringType.MOSH, []
+
+    # Маппинг testset → настройки
+    by_testset: dict[str, dict] = {s["testset"]: s for s in settings}
+    # Маппинг name → номер Subtask (для построения зависимостей)
+    name_to_number: dict[str, int] = {}
+
+    # Определяем есть ли хотя бы одна complete-group (full_score)
+    has_complete_group = any(
+        "full_score" in s and s.get("full_score", 0) > 0
+        for s in settings
+    )
+
+    scoring_type = ScoringType.IOI_GROUPS if has_complete_group else ScoringType.MOSH
+
+    # Строим test_scores и subtasks_data по testSets (в порядке тестов)
+    test_scores:   list[float] = []
+    subtasks_data: list[dict]  = []
+    test_cursor = 1           # текущий номер теста (1-based, по позиции на диске)
+    subtask_counter = 0
+
+    # Нумерация тестов: считаем что файлы на диске идут подряд в том же порядке
+    # что и testSets из meta.json
+    for ts in testSets:
+        ts_name    = ts.get("name", "")
+        ts_tests   = ts.get("matchedTests", [])
+        n_tests    = len(ts_tests)
+        s          = by_testset.get(ts_name, {})
+        name       = s.get("name", ts_name)  # короткое имя группы (для зависимостей)
+        feedback   = s.get("feedback", "")
+
+        test_from  = test_cursor
+        test_to    = test_cursor + n_tests - 1
+        test_cursor += n_tests
+
+        if "full_score" in s:
+            # complete-group: баллы только если вся группа прошла
+            full_score = float(s["full_score"])
+            # В test_scores ставим 0 для каждого теста — баллы даст Subtask
+            test_scores.extend([0.0] * n_tests)
+
+            if full_score > 0:
+                subtask_counter += 1
+                name_to_number[name] = subtask_counter
+                subtasks_data.append({
+                    "number":    subtask_counter,
+                    "max_score": full_score,
+                    "test_from": test_from,
+                    "test_to":   test_to,
+                    "depends_on_names": s.get("depends", []),
+                })
+            # full_score == 0 (samples) — просто добавляем нули, Subtask не нужен
+
+        elif "test_score" in s:
+            # each-test: балл за каждый тест отдельно
+            per_test = float(s["test_score"])
+            test_scores.extend([per_test] * n_tests)
+
+            if per_test > 0 and has_complete_group:
+                # В смешанном режиме (IOI_GROUPS) each-test группы тоже
+                # нужно представить как Subtask — иначе ioi_judge не учтёт
+                # зависимости на них
+                subtask_counter += 1
+                name_to_number[name] = subtask_counter
+                subtasks_data.append({
+                    "number":    subtask_counter,
+                    "max_score": per_test * n_tests,
+                    "test_from": test_from,
+                    "test_to":   test_to,
+                    "depends_on_names": s.get("depends", []),
+                })
+        else:
+            # Группа без явных баллов — нули
+            test_scores.extend([0.0] * n_tests)
+
+    # Переводим depends_on_names → depends_on (номера Subtask)
+    # depends в settings может содержать int или str — нормализуем к str
+    for st in subtasks_data:
+        st["depends_on"] = [
+            name_to_number[str(dep)]
+            for dep in st["depends_on_names"]
+            if str(dep) in name_to_number
+        ]
+        # Для each-test групп в IOI_GROUPS режиме нужно пересчитать max_score
+        # через test_scores (уже заполнены) — subtask.max_score уже правильный
+
+    # Если IOI_GROUPS — test_scores должны быть нулями для complete-group тестов
+    # (баллы начисляет ioi_judge через Subtask), а для each-test — реальными
+    # Это уже выполнено выше
+
+    return test_scores, scoring_type, subtasks_data
+
 
 
 def _title_from_meta(pm: dict) -> str:
@@ -273,6 +443,7 @@ def _read_mosh_statement(task_dir: Path) -> tuple[str | None, Path | None]:
     candidates = [
         task_dir / "statements" / ".html" / "russian" / "problem.html",
         task_dir / "statements" / ".html" / "ru" / "full_page.html",
+        task_dir / "statements" / ".html" / "ru" / "problem.html",
         task_dir / "statements" / "russian" / "problem.html",
         task_dir / "statement" / "problem.html",
     ]
@@ -300,7 +471,6 @@ def _read_mosh_statement(task_dir: Path) -> tuple[str | None, Path | None]:
 def _resolve_mosh_checker(task_dir: Path, dest_dir: Path) -> str:
     """Ищет готовый чекер или компилирует check.cpp. Всегда сохраняет .cpp исходник."""
     dest_dir.mkdir(parents=True, exist_ok=True)
-
     # Ищем .cpp исходник
     cpp_candidates = [
         task_dir / "check.cpp",
@@ -308,7 +478,6 @@ def _resolve_mosh_checker(task_dir: Path, dest_dir: Path) -> str:
         task_dir / "checkers" / "check.cpp",
     ]
     check_src = next((c for c in cpp_candidates if c.exists()), None)
-
     # Всегда сохраняем .cpp рядом с бинарником
     if check_src:
         shutil.copy2(check_src, dest_dir / "checker.cpp")

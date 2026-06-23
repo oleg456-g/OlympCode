@@ -1,0 +1,314 @@
+<style>
+.problem-statement {
+    margin: 0.5em auto 2em auto;
+    font-family: verdana,serif;
+    line-height: 1.5em;
+    font-size: 14px;
+    max-width: 1024px;
+}
+
+.problem-statement .epigraph {
+    margin-left: 67%;
+    width: 33%;
+}
+
+.problem-statement .epigraph-text {
+}
+
+.problem-statement .epigraph-source {
+    border-top: 1px solid #888;
+    text-align: right;
+}
+
+.problem-statement .lstlisting {
+    padding: 0.5em;
+    
+}
+
+.problem-statement .tex-tabular {
+    margin: 1em 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.problem-statement .tex-tabular td {
+    padding: 0.15em 0.7em;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-left {
+    border-left: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-right {
+    border-right: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-top {
+    border-top: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-left {
+    text-align: left;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-center {
+    text-align: center;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-right {
+    text-align: right;
+}
+
+.problem-statement p {
+    margin: 0 0 1em 0;
+}
+
+.problem-statement p a, .problem-statement ul a, .problem-statement ol a, .problem-statement td a {
+    margin: 0;
+}
+
+.problem-statement .header {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    margin-bottom: 0.25em;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    font-family: arial;
+}
+
+.problem-statement ul {
+    list-style: disc;
+    list-style-type: disc;
+    list-style-position: outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement ol {
+    list-style: decimal;
+    list-style-type: decimal;
+    list-style-position: outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement li {
+    line-height: 1.5em;
+    margin-left: 3em;
+}
+
+.problem-statement .property-title {
+    display: inline;
+}
+
+.problem-statement .property-title:after {
+    content: ": ";
+}
+
+.problem-statement .time-limit, .problem-statement .memory-limit, .problem-statement .input-file, .problem-statement .output-file {
+    margin: 0 auto;
+}
+
+.problem-statement .legend {
+    margin-bottom: 1em;
+}
+
+.problem-statement .tutorial {
+    margin-bottom: 1em;
+}
+
+.problem-statement .section-title {
+    font-family: arial;
+    font-size: 115%;
+    font-weight: bold;
+}
+
+.problem-statement .input-specification,
+    .problem-statement .output-specification,
+    .problem-statement .sample-tests,
+    .problem-statement .author,
+    .problem-statement .resource,
+    .problem-statement .date {
+    /*margin-bottom: 1em;*/
+}
+
+.problem-statement .output-specification {
+    margin-bottom: 1em;
+}
+
+.problem-statement .sample-tests .sample-test {
+}
+
+.problem-statement .sample-tests .input, .problem-statement .sample-tests .output {
+    border: 1px solid #888;
+}
+
+.problem-statement .sample-tests .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.problem-statement .sample-tests pre {
+    line-height: 1.25em;
+    padding: 0.25em;
+    margin: 0;
+    
+}
+
+.problem-statement .sample-tests .title {
+    font-family: arial;
+    padding: 0.25em;
+    border-bottom: 1px solid #888;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+.problem-statement .tex-formula {
+    vertical-align: middle;
+    margin: 0;
+    border:medium none;
+    position: relative;
+    bottom: 2px;
+}
+
+.problem-statement .tex-span {
+    font-size: 125%;
+    font-family: times new roman;
+    white-space: nowrap;
+}
+
+.problem-statement .tex-font-size-tiny {
+    font-size: 70%;
+}
+
+.problem-statement .tex-font-size-script {
+    font-size: 75%;
+}
+
+.problem-statement .tex-font-size-footnotes {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-small {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-normal {
+    font-size: 100%;
+}
+
+.problem-statement .tex-font-size-large-1 {
+    font-size: 115%;
+}
+
+.problem-statement .tex-font-size-large-2 {
+    font-size: 130%;
+}
+
+.problem-statement .tex-font-size-large-3 {
+    font-size: 145%;
+}
+
+.problem-statement .tex-font-size-huge-1 {
+    font-size: 175%;
+}
+
+.problem-statement .tex-font-size-huge-2 {
+    font-size: 200%;
+}
+
+.problem-statement .tex-font-style-rm {
+}
+
+.problem-statement .tex-font-style-sf {
+    font-family: arial;
+}
+
+.problem-statement .tex-font-style-striked {
+    text-decoration: line-through;
+}
+
+.problem-statement .tex-font-style-tt {
+    font-size: 110%;
+    font-family: courier new;
+}
+
+.problem-statement .tex-font-style-md {
+}
+
+.problem-statement .tex-font-style-bf {
+    font-weight: bold;
+}
+
+.problem-statement .tex-font-style-underline {
+    text-decoration: underline;
+}
+
+.problem-statement .tex-font-style-up {
+}
+
+.problem-statement .tex-font-style-it {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sl {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sc {
+    text-transform: uppercase;
+}
+
+.problem-statement .tex-graphics {
+    max-width: 95%;
+    display: block;
+}
+
+.problem-statement .tex-tabular .tex-graphics {
+    max-width: 100%;
+}
+
+.problem-statement .input-output-copier {
+    font-size: 0.75rem;
+    float: right;
+    color: #888;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid rgb(185, 185, 185);
+    line-height: 0.8rem;
+    text-transform: none;
+}
+
+.problem-statement .input-output-copier:hover {
+    background-color: #def;
+}
+
+.problem-statement .test-example-line-even {
+    background-color: #E0E0E0;
+}
+
+</style>
+<DIV class="problem-statement"><DIV class="header"><DIV class="title">Харухи и путешествие на круге</DIV><DIV class="time-limit"><DIV class="property-title">ограничение по времени на тест</DIV>1 секунда</DIV><DIV class="memory-limit"><DIV class="property-title">ограничение по памяти на тест</DIV>256 мегабайт</DIV><DIV class="input-file"><DIV class="property-title">ввод</DIV>стандартный ввод</DIV><DIV class="output-file"><DIV class="property-title">вывод</DIV>стандартный вывод</DIV></DIV><DIV class="legend"><P>Харухи Судзумии было скучно, поэтому она решила принять участие в соревновании по спортивному программированию. Соревнование состоит из одной задачи:</P><P>Дан круг, состоящий из $$$2n$$$ секторов, пронумерованных от $$$1$$$ до $$$2n$$$ по часовой стрелке, начиная с некоторой точки. За сектором $$$1$$$ следует сектор $$$2$$$, за сектором $$$2$$$ &mdash; сектор $$$3$$$ и так далее, а за сектором $$$2n$$$ следует сектор $$$1$$$. Между любыми соседними$$$^{[1]}$$$ секторами можно передвигаться за $$$1$$$ единицу времени. Помимо этого, из сектора $$$i$$$ в сектор $$$j$$$, расположенный диаметрально противоположно$$$^{[2]}$$$ сектору $$$i$$$, можно сдвинуться за $$$a_i$$$ единиц времени. Заметим, что в данном случае время передвижения зависит от направления движения: $$$a_i$$$ из $$$i$$$ в $$$j$$$ и $$$a_j$$$ из $$$j$$$ в $$$i$$$.</P><P>Необходимо ответить на $$$q$$$ запросов. Каждый запрос задается двумя номерами секторов $$$u_i$$$ и $$$v_i$$$. Для каждого запроса необходимо найти минимальное количество времени, которое потребуется, чтобы попасть в сектор $$$v_i$$$, если начинать в секторе $$$u_i$$$.</P><P>$$$^{[1]}$$$ Два сектора $$$i$$$ и $$$j$$$ называются соседними, если $$$i$$$ следует сразу после $$$j$$$ или наоборот.</P><P>$$$^{[2]}$$$ Два сектора $$$i$$$ и $$$j$$$ называются диаметрально противоположными, если $$$|i - j| = n$$$.</P></DIV><P></P><P></P><DIV class="input-specification"><DIV class="section-title">Входные данные</DIV><P></P><P>Каждый тест состоит из нескольких наборов входных данных. Первая строка содержит одно целое число $$$t$$$ ($$$1 \leq t \leq 5000$$$) &mdash; количество наборов входных данных. Далее следует описание наборов входных данных.</P><P>В первой строке дано два числа $$$n$$$ и $$$q$$$ ($$$1 \leq n \leq 5 \cdot 10^4, 1 \leq q \leq 10^5$$$).</P><P>Во второй строке дано $$$2n$$$ чисел $$$a_1, a_2, a_3, \dots, a_{2n}$$$ ($$$1 \leq a_i \leq 10^5$$$).</P><P>В следующих $$$q$$$ строках описаны все запросы.</P><P>В $$$i$$$-й строке содержатся два числа $$$u_i$$$ и $$$v_i$$$ ($$$1 \leq u_i, v_i \leq 2n$$$) &mdash; описание очередного запроса.</P><P>Гарантируется, что сумма $$$2n$$$ по всем наборам входных данных и сумма $$$q$$$ по всем наборам входных данных не превосходят $$$10^5$$$.</P></DIV><P></P><P></P><DIV class="output-specification"><DIV class="section-title">Выходные данные</DIV><P></P><P>Для каждого набора входных данных выведите $$$q$$$ строк: число в $$$i$$$-й строке должно быть равно минимальному количеству времени для того, чтобы попасть из сектора $$$u_i$$$ в сектор $$$v_i$$$.</P></DIV><P></P><P></P><DIV class="sample-tests"><DIV class="section-title">Примеры</DIV><P></P><P></P><DIV class="sample-test"><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content">
+<DIV >1</DIV><DIV >1 2</DIV><DIV >1 1</DIV><DIV >1 2</DIV><DIV >2 1</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+1
+1
+</PRE></DIV><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content">
+<DIV >1</DIV><DIV >4 8</DIV><DIV >1 2 3 4 5 6 7 8</DIV><DIV >1 5</DIV><DIV >5 1</DIV><DIV >2 6</DIV><DIV >6 2</DIV><DIV >3 7</DIV><DIV >7 3</DIV><DIV >4 8</DIV><DIV >8 4</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+1
+4
+2
+4
+3
+4
+4
+3
+</PRE></DIV></DIV></DIV></DIV><P></P><P>  </P>

@@ -91,6 +91,7 @@ async def recent_submissions(task_id: int, request: Request, db: Session = Depen
 
 @router.get("/status/{submission_id}")
 async def submission_status(submission_id: int, request: Request, db: Session = Depends(get_db)):
+    from judge_worker import get_current_test
     sub = db.query(Submission).filter_by(id=submission_id).first()
     if not sub:
         return JSONResponse({"error": "not found"}, status_code=404)
@@ -104,6 +105,7 @@ async def submission_status(submission_id: int, request: Request, db: Session = 
         "execution_time":         sub.execution_time,
         "ai_hint":                sub.ai_hint,
         "scoring_type":           sub.task.scoring_type.value if sub.task else "icpc",
+        "current_test":           get_current_test(submission_id),
     })
 
 

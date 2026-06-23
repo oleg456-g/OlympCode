@@ -1,0 +1,341 @@
+<style>
+.problem-statement {
+    margin: 0.5em auto 2em auto;
+    font-family: verdana,serif;
+    line-height: 1.5em;
+    font-size: 14px;
+    max-width: 1024px;
+}
+
+.problem-statement .epigraph {
+    margin-left: 67%;
+    width: 33%;
+}
+
+.problem-statement .epigraph-text {
+}
+
+.problem-statement .epigraph-source {
+    border-top: 1px solid #888;
+    text-align: right;
+}
+
+.problem-statement .lstlisting {
+    padding: 0.5em;
+    
+}
+
+.problem-statement .tex-tabular {
+    margin: 1em 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.problem-statement .tex-tabular td {
+    padding: 0.15em 0.7em;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-left {
+    border-left: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-right {
+    border-right: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-top {
+    border-top: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-left {
+    text-align: left;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-center {
+    text-align: center;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-right {
+    text-align: right;
+}
+
+.problem-statement p {
+    margin: 0 0 1em 0;
+}
+
+.problem-statement p a, .problem-statement ul a, .problem-statement ol a, .problem-statement td a {
+    margin: 0;
+}
+
+.problem-statement .header {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    margin-bottom: 0.25em;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    font-family: arial, serif;
+}
+
+.problem-statement ul {
+    list-style: disc outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement ol {
+    list-style: decimal outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement li {
+    line-height: 1.5em;
+    margin-left: 3em;
+}
+
+.problem-statement .property-title {
+    display: inline;
+}
+
+.problem-statement .property-title:after {
+    content: ": ";
+}
+
+.problem-statement .time-limit, .problem-statement .memory-limit, .problem-statement .input-file, .problem-statement .output-file {
+    margin: 0 auto;
+}
+
+.problem-statement .legend {
+    margin-bottom: 1em;
+}
+
+.problem-statement .tutorial {
+    margin-bottom: 1em;
+}
+
+.problem-statement .section-title {
+    font-family: arial, serif;
+    font-size: 115%;
+    font-weight: bold;
+}
+
+.problem-statement .input-specification,
+    .problem-statement .output-specification,
+    .problem-statement .sample-tests,
+    .problem-statement .author,
+    .problem-statement .resource,
+    .problem-statement .date {
+    /*margin-bottom: 1em;*/
+}
+
+.problem-statement .output-specification {
+    margin-bottom: 1em;
+}
+
+.problem-statement .sample-tests .sample-test {
+}
+
+.problem-statement .sample-tests .input, .problem-statement .sample-tests .output {
+    border: 1px solid #888;
+}
+
+.problem-statement .sample-tests .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.problem-statement .sample-tests pre {
+    line-height: 1.25em;
+    padding: 0.25em;
+    margin: 0;
+    
+}
+
+.problem-statement .sample-tests .title {
+    font-family: arial, serif;
+    padding: 0.25em;
+    border-bottom: 1px solid #888;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+.problem-statement .tex-formula {
+    vertical-align: middle;
+    margin: 0;
+    border:medium none;
+    position: relative;
+    bottom: 2px;
+}
+
+.problem-statement .tex-span {
+    font-size: 125%;
+    font-family: times new roman, serif;
+    white-space: nowrap;
+}
+
+.problem-statement .tex-font-size-tiny {
+    font-size: 70%;
+}
+
+.problem-statement .tex-font-size-script {
+    font-size: 75%;
+}
+
+.problem-statement .tex-font-size-footnotes {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-small {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-normal {
+    font-size: 100%;
+}
+
+.problem-statement .tex-font-size-large-1 {
+    font-size: 115%;
+}
+
+.problem-statement .tex-font-size-large-2 {
+    font-size: 130%;
+}
+
+.problem-statement .tex-font-size-large-3 {
+    font-size: 145%;
+}
+
+.problem-statement .tex-font-size-huge-1 {
+    font-size: 175%;
+}
+
+.problem-statement .tex-font-size-huge-2 {
+    font-size: 200%;
+}
+
+.problem-statement .tex-font-style-rm {
+}
+
+.problem-statement .tex-font-style-striked {
+    text-decoration: line-through;
+}
+
+.problem-statement .tex-font-style-underline {
+    text-decoration: underline;
+}
+
+.problem-statement .tex-font-style-sf {
+    font-family: arial, serif;
+}
+
+.problem-statement .tex-font-style-tt {
+    font-size: 110%;
+    font-family: courier new, serif;
+}
+
+.problem-statement .tex-font-style-md {
+}
+
+.problem-statement .tex-font-style-bf {
+    font-weight: bold;
+}
+
+.problem-statement .tex-font-style-up {
+}
+
+.problem-statement .tex-font-style-it {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sl {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sc {
+    text-transform: uppercase;
+}
+
+.problem-statement .tex-graphics {
+    max-width: 95%;
+    display: block;
+}
+
+.problem-statement .tex-tabular .tex-graphics {
+    max-width: 100%;
+}
+
+.problem-statement .input-output-copier {
+    font-size: 0.75rem;
+    float: right;
+    color: #888;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid rgb(185, 185, 185);
+    line-height: 0.8rem;
+    text-transform: none;
+}
+
+.problem-statement .input-output-copier:hover {
+    background-color: #def;
+}
+
+.problem-statement .test-example-line-even {
+    background-color: #E0E0E0;
+}
+
+.statement-footnote {
+    font-size: 85%;
+    position: relative;
+}
+
+.statement-footnote::before {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 25%;
+    border-top: 1px solid #888;
+}
+
+.statement-footnote p {
+    margin-bottom: 0.5em;
+}
+
+.statement-footnote p:last-child {
+    margin-bottom: 1em;
+}
+
+.problem-statement .header .input-standard,
+.problem-statement .header .output-standard {
+    display: none;
+}
+
+</style>
+<DIV class="problem-statement"><DIV class="header"><DIV class="title">Мадока и порванный фотоальбом</DIV><DIV class="time-limit"><DIV class="property-title">ограничение по времени на тест</DIV>1 секунда</DIV><DIV class="memory-limit"><DIV class="property-title">ограничение по памяти на тест</DIV>256 мегабайт</DIV><DIV class="input-file input-standard"><DIV class="property-title">ввод</DIV>стандартный ввод</DIV><DIV class="output-file output-standard"><DIV class="property-title">вывод</DIV>стандартный вывод</DIV></DIV><DIV class="legend"><P>Мадока недавно нашла свой фотоальбом из детского сада. И она хочет вырезать как можно больше из него фотографий, так как они ей не нравятся. Но при этом в нем есть фотки со своим любимым попугайчиком и она их никак не хочет трогать.</P><P>Фотоальбом представляет собой прямоугольник $$$n \times m$$$, где в каждой клетке содержится ровно одна фотография. Также для каждой фотографии известно, есть ли на ней попуг. Мадока может вырезать только подпрямоугольники фотоальбома. Но при том вырезанные подпрямоугольники не могут пересекаться или касаться по сторонам.</P><P>Так, например, следующие прямоугольники нельзя вырезать, так как они касаются по стороне:</P><P></P><CENTER> <IMG class="tex-graphics" src="/contests_data/6/мадока_и_порванный_фотоальбом/a46e46607f4d9b2b670cdac46f32d3952fc5e968.png" width="189px"> </CENTER><P></P><P>Поэтому Мадоке стало интересно, а какое максимальное количество фотографий она может вырезать, соблюдая правила, и чтобы ни одна фотка с попугом не была вырезана.</P></DIV><P></P><P></P><DIV class="input-specification"><DIV class="section-title">Входные данные</DIV><P></P><P>Данная задача состоит из нескольких наборов тестовых случаев.</P><P>В первой строке задано единственное число $$$t$$$ ($$$1 \leq t \leq 3000$$$) &mdash; количество тестовых случаев. Затем идет их описание.</P><P>В первой строке каждого тестового случая заданы два числа $$$n, m$$$ ($$$ 1 \leq n \leq 5, 1 \leq m \leq 10^4$$$).</P><P>Гарантируется, что сумма $$$m$$$ по всем тестовым случаям не превосходит $$$10^4$$$</P><P>Затем идут $$$n$$$ бинарных строк $$$a_1 a_2 \ldots a_m$$$, где равенство $$$a_j = 1$$$ означает, что в этой строке $$$j$$$-я фотография содержит попуга и ее нельзя вырезать.</P></DIV><P></P><P></P><DIV class="output-specification"><DIV class="section-title">Выходные данные</DIV><P></P><P>Для каждого тестового случая выведите в единственной строке максимальное количество фотографий, которое можно вырезать, чтобы выполнялось условие.</P></DIV><P></P><P></P><DIV class="sample-tests"><DIV class="section-title">Пример</DIV><P></P><P></P><DIV class="sample-test"><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content" data-content="3
+2 3
+000
+010
+4 3
+101
+000
+000
+011
+4 3
+000
+100
+000
+001
+">
+<DIV >3</DIV><DIV >2 3</DIV><DIV >000</DIV><DIV >010</DIV><DIV >4 3</DIV><DIV >101</DIV><DIV >000</DIV><DIV >000</DIV><DIV >011</DIV><DIV >4 3</DIV><DIV >000</DIV><DIV >100</DIV><DIV >000</DIV><DIV >001</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+4
+6
+7
+</PRE></DIV></DIV></DIV><P></P><P></P><DIV class="note"><DIV class="section-title">Примечание</DIV><P></P><P>Примеры оптимальных ответов на семплы</P><P></P><CENTER> <IMG class="tex-graphics" src="/contests_data/6/мадока_и_порванный_фотоальбом/22b22bcd1f42196a1761a7e8d461be1933f49d59.png"> </CENTER></DIV></DIV><P></P><P>  </P>

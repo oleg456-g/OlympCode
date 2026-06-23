@@ -60,7 +60,14 @@
 
 </div>
 
-<div class="card" style="margin-top:16px">
+<div class="card" style="margin-top:16px; margin-bottom:16px">
+  <h2 style="font-size:15px; font-weight:600; margin-bottom:12px">Инструменты</h2>
+  <div style="display:flex; gap:8px; flex-wrap:wrap">
+    <a href="/admin/submissions" class="btn btn--outline">📋 Все посылки пользователей</a>
+  </div>
+</div>
+
+<div class="card" style="margin-top:0px">
   <div style="display:flex; justify-content:space-between; align-items:center">
     <span style="font-size:14px; color:var(--text-2)">Всего задач в базе: <b>{{ tasks_count }}</b></span>
     <a href="/admin/reimport" class="btn btn--outline" style="font-size:13px">

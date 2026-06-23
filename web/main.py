@@ -39,6 +39,11 @@ async def startup():
                 "ALTER TABLE contests ADD COLUMN format VARCHAR(16) DEFAULT 'polygon'"
             ))
 
+        if "is_visible" not in col_names:
+            conn.execute(text(
+                "ALTER TABLE contests ADD COLUMN is_visible INTEGER NOT NULL DEFAULT 0"
+            ))
+
         # ── Миграции tasks ─────────────────────────────────────────────────
         cols = conn.execute(text("PRAGMA table_info(tasks)")).fetchall()
         col_names = {c[1] for c in cols}

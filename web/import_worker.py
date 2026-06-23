@@ -178,12 +178,19 @@ def _run_single_polygon_import(
 ) -> None:
     """Импортирует одну задачу Polygon в фоновом потоке."""
     from polygon_importer import import_polygon_zip
+    from models import Contest
 
     db = SessionLocal()
     try:
         job.status = JobStatus.RUNNING
         job.message = "Начинаю импорт..."
         job.progress = 0
+
+        # Проверяем что контест ещё существует
+        if not db.query(Contest).filter_by(id=contest_id).first():
+            job.status = JobStatus.ERROR
+            job.message = "Контест был удалён — импорт отменён"
+            return
 
         def on_progress(pct: int, msg: str):
             job.progress = pct
@@ -200,19 +207,17 @@ def _run_single_polygon_import(
             progress_cb=on_progress,
         )
 
-        # import_polygon_zip возвращает Task если одна задача,
-        # или list[Task] если архив оказался мульти-контестом
+        # import_polygon_zip возвращает Task или list[Task]
         if isinstance(task, list):
             job.total_tasks = len(task)
             job.task_id    = task[0].id if task else None
             job.task_title = task[0].title if task else ""
-            job.status     = JobStatus.DONE
             job.message    = f"Импортировано {len(task)} задач"
         else:
             job.task_id    = task.id
             job.task_title = task.title
-            job.status     = JobStatus.DONE
             job.message    = f"Успешно: {task.title}"
+        job.status   = JobStatus.DONE
         job.progress = 100
 
     except Exception as e:
@@ -234,10 +239,16 @@ def _run_multi_polygon_import(
 ) -> None:
     """Импортирует несколько задач из мульти-архива."""
     from polygon_importer import import_polygon_zip
+    from models import Contest
 
     db = SessionLocal()
     try:
         job.status = JobStatus.RUNNING
+
+        if not db.query(Contest).filter_by(id=contest_id).first():
+            job.status = JobStatus.ERROR
+            job.message = "Контест был удалён — импорт отменён"
+            return
 
         with tempfile.TemporaryDirectory() as extract_dir:
             with zipfile.ZipFile(tmp_path, "r") as zf:
@@ -364,6 +375,7 @@ def _run_mosh_import(
     task_name: str,
 ) -> None:
     from mosh_importer import import_mosh_contest_zip, import_mosh_task_zip
+    from models import Contest
 
     db = SessionLocal()
     try:
@@ -371,7 +383,21 @@ def _run_mosh_import(
         job.message = "Начинаю импорт МОШ..."
         job.progress = 0
 
+        # Проверяем что контест ещё существует
+        contest = db.query(Contest).filter_by(id=contest_id).first()
+        if not contest:
+            job.status = JobStatus.ERROR
+            job.message = "Контест был удалён — импорт отменён"
+            return
+
         def on_progress(pct: int, msg: str):
+            # Проверяем контест на каждом шаге прогресса
+            db2 = SessionLocal()
+            try:
+                if not db2.query(Contest).filter_by(id=contest_id).first():
+                    raise RuntimeError("Контест был удалён во время импорта")
+            finally:
+                db2.close()
             job.progress = pct
             job.message = msg
 
@@ -390,14 +416,21 @@ def _run_mosh_import(
             job.message = f"Успешно: {task.title}"
             job.progress = 100
         else:
-            on_progress(10, "Определение задач в архиве...")
-
-            tasks = import_mosh_contest_zip(tmp_path, contest_id, db)
+            tasks = import_mosh_contest_zip(
+                tmp_path,
+                contest_id,
+                db,
+                progress_cb=on_progress,
+            )
             job.total_tasks = len(tasks)
             job.status = JobStatus.DONE
             job.message = f"Импортировано {len(tasks)} задач МОШ"
             job.progress = 100
 
+    except RuntimeError as e:
+        # Контест удалён во время импорта — не ошибка судьи
+        job.status = JobStatus.ERROR
+        job.message = str(e)
     except Exception as e:
         job.status = JobStatus.ERROR
         job.error = str(e)[:500]

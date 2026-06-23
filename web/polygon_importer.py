@@ -68,6 +68,14 @@ def import_polygon_zip(
             contest_info = _parse_contest_xml(tmpdir)
             slug_to_letter = contest_info["slug_to_letter"] if contest_info else {}
 
+            # Сохраняем contest.xml в папку контеста
+            for candidate in (tmpdir / "contest.xml", *list(tmpdir.glob("*/contest.xml"))):
+                if candidate.exists():
+                    contest_dir = CONTESTS_DATA_DIR / str(contest_id)
+                    contest_dir.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(candidate, contest_dir / "contest.xml")
+                    break
+
             # Упорядочиваем задачи: если contest.xml есть — по нему,
             # иначе по алфавиту имён директорий (старое поведение).
             if slug_to_letter:
@@ -268,6 +276,11 @@ def _import_polygon_task_dir_directly(
         statement_html = _rewrite_asset_urls(statement_html, contest_id, task_slug)
         problem_html_path = dest_dir / "problem.html"
         problem_html_path.write_text(statement_html, encoding="utf-8")
+
+    # Сохраняем оригинальный problem.xml рядом с задачей
+    xml_src = task_root / "problem.xml"
+    if xml_src.exists():
+        shutil.copy2(xml_src, dest_dir / "problem.xml")
 
     _extract_solutions(task_root, dest_dir, meta.get("solutions", []))
 

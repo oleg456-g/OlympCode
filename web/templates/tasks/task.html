@@ -105,7 +105,7 @@
 
   {% if task.is_output_only %}
   <div style="background:var(--amber-dim); border-left:3px solid var(--amber); padding:8px 14px; font-size:12px; color:var(--amber)">
-    ⚠ Необходимо дать ответ на <b>все</b> тесты в файле, даже если не знаешь ответ — поставь любой ответ, удовлетворяющий условию. Пропуск или неправильный формат теста даёт 0 баллов за всю задачу.
+    ⚠ Необходимо дать ответ на <b>все</b> тесты в файле, даже если не знаешь ответ — поставь любое число (например 0). Пропуск теста даёт 0 баллов за всю задачу.
   </div>
   {% endif %}
 
@@ -542,11 +542,11 @@ async function submitCode() {
   try {
     const res  = await fetch(`/submissions/submit/${TASK_ID}`, { method: 'POST', body: form });
     const data = await res.json();
-    if (data.error) { alert(data.error); return; }
+    if (data.error) { console.error('submit error:', data.error); return; }
     subId  = data.submission_id;
     subNum = data.task_submission_number;
   } catch (err) {
-    alert('Ошибка отправки: ' + err.message);
+    console.error('Ошибка отправки:', err.message);
     return;
   }
 
@@ -560,7 +560,7 @@ async function submitCode() {
   card.innerHTML = `
     <div class="status-card__main">
       <span class="spinner"></span>
-      <span>Посылка <b>#${subNum}</b> — проверяется...</span>
+      <span>Посылка <b>#${subNum}</b> — проверяется... <span id="stest-${subId}" style="color:var(--text-3);font-size:12px"></span></span>
       <span class="badge badge--pending" id="sbadge-${subId}">PENDING</span>
     </div>
   `;
@@ -578,8 +578,15 @@ async function pollVerdict(subId, subNum) {
 
       updateSubmissionRow(subId, data);
 
+      // Показываем текущий тест пока идёт проверка
+      const testSpan = document.getElementById(`stest-${subId}`);
+      if (testSpan && data.current_test && !FINAL_VERDICTS.includes(data.verdict)) {
+        testSpan.textContent = `тест #${data.current_test}`;
+      } else if (testSpan) {
+        testSpan.textContent = '';
+      }
+
       if (FINAL_VERDICTS.includes(data.verdict)) {
-        // Вердикт уже виден в таблице посылок — карточку снизу убираем
         const card = document.getElementById(`status-${subId}`);
         if (card) {
           card.style.transition = 'opacity .3s';
@@ -614,8 +621,21 @@ function addSubmissionRow(subId, subNum, lang) {
 function updateSubmissionRow(subId, data) {
   const cell = document.getElementById(`verdict-text-${subId}`)?.parentElement;
   if (cell) cell.innerHTML = verdictBadgeHtml(subId, data);
-  const t  = document.getElementById(`test-${subId}`);
-  if (t)  t.textContent  = data.failed_test || '—';
+  const t = document.getElementById(`test-${subId}`);
+  if (t) {
+    if (data.failed_test) {
+      // Финальный — показываем тест на котором упали
+      t.textContent = data.failed_test;
+      t.style.color = '';
+    } else if (data.current_test && !FINAL_VERDICTS.includes(data.verdict)) {
+      // В процессе — показываем текущий тест серым
+      t.textContent = data.current_test;
+      t.style.color = 'var(--text-3)';
+    } else {
+      t.textContent = '—';
+      t.style.color = '';
+    }
+  }
   const tm = document.getElementById(`time-${subId}`);
   if (tm) tm.textContent = data.execution_time ? data.execution_time.toFixed(2)+'с' : '—';
 }

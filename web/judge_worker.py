@@ -17,7 +17,27 @@ import time
 import traceback
 from datetime import datetime
 
-MAX_WORKERS = 5  # сколько посылок проверять одновременно
+MAX_WORKERS = 2  # сколько посылок проверять одновременно
+
+# In-memory хранилище текущего теста для RUNNING посылок
+# { submission_id: test_number }  — сбрасывается при завершении
+_current_tests: dict[int, int] = {}
+_current_tests_lock = threading.Lock()
+
+
+def set_current_test(submission_id: int, test_num: int) -> None:
+    with _current_tests_lock:
+        _current_tests[submission_id] = test_num
+
+
+def get_current_test(submission_id: int) -> int | None:
+    with _current_tests_lock:
+        return _current_tests.get(submission_id)
+
+
+def clear_current_test(submission_id: int) -> None:
+    with _current_tests_lock:
+        _current_tests.pop(submission_id, None)
 
 
 # ── Семафор ограничения параллелизма ────────────────────────────────────────
@@ -115,6 +135,10 @@ def _run_judge(submission_id: int) -> None:
 
         test_scores = json.loads(task.test_scores_json) if task.test_scores_json else []
 
+        def on_test_start(test_num: int):
+            """Вызывается судьёй перед каждым тестом."""
+            set_current_test(submission_id, test_num)
+
         if task.is_interactive and task.interactor_path:
             result = judge_interactive(
                 code            = sub.code,
@@ -166,15 +190,16 @@ def _run_judge(submission_id: int) -> None:
         elif task.scoring_type in (ScoringType.IOI_SUM, ScoringType.IOI_GROUPS):
             subtasks = task.subtasks if task.scoring_type == ScoringType.IOI_GROUPS else None
             result = judge_ioi(
-                code         = sub.code,
-                language     = sub.language,
-                tests_path   = task.tests_path,
-                time_limit   = task.time_limit,
-                memory_limit = task.memory_limit,
-                checker_path = task.checker_path,
-                scoring_type = task.scoring_type,
-                test_scores  = test_scores,
-                subtasks     = subtasks,
+                code          = sub.code,
+                language      = sub.language,
+                tests_path    = task.tests_path,
+                time_limit    = task.time_limit,
+                memory_limit  = task.memory_limit,
+                checker_path  = task.checker_path,
+                scoring_type  = task.scoring_type,
+                test_scores   = test_scores,
+                subtasks      = subtasks,
+                on_test_start = on_test_start,
             )
             sub.verdict        = result.verdict
             sub.score          = result.score
@@ -191,12 +216,13 @@ def _run_judge(submission_id: int) -> None:
 
         else:
             result = judge(
-                code         = sub.code,
-                language     = sub.language,
-                tests_path   = task.tests_path,
-                time_limit   = task.time_limit,
-                memory_limit = task.memory_limit,
-                checker_path = task.checker_path,
+                code          = sub.code,
+                language      = sub.language,
+                tests_path    = task.tests_path,
+                time_limit    = task.time_limit,
+                memory_limit  = task.memory_limit,
+                checker_path  = task.checker_path,
+                on_test_start = on_test_start,
             )
             sub.verdict        = result.verdict
             sub.failed_test    = result.failed_test
@@ -215,3 +241,4 @@ def _run_judge(submission_id: int) -> None:
             pass
     finally:
         db.close()
+        clear_current_test(submission_id)

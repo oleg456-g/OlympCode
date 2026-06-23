@@ -94,6 +94,7 @@ class Contest(Base):
     year:        Mapped[int | None] = mapped_column(Integer, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     format:      Mapped[ContestFormat] = mapped_column(SAEnum(ContestFormat), default=ContestFormat.POLYGON)
+    is_visible:  Mapped[bool]       = mapped_column(Boolean, default=False)
     created_at:  Mapped[datetime]   = mapped_column(DateTime, default=datetime.now)
 
     contest_tasks: Mapped[list["ContestTask"]] = relationship(back_populates="contest")

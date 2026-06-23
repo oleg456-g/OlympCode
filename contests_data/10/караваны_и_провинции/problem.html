@@ -1,0 +1,305 @@
+<style>
+.problem-statement {
+    margin: 0.5em auto 2em auto;
+    font-family: verdana,serif;
+    line-height: 1.5em;
+    font-size: 14px;
+    max-width: 1024px;
+}
+
+.problem-statement .epigraph {
+    margin-left: 67%;
+    width: 33%;
+}
+
+.problem-statement .epigraph-text {
+}
+
+.problem-statement .epigraph-source {
+    border-top: 1px solid #888;
+    text-align: right;
+}
+
+.problem-statement .lstlisting {
+    padding: 0.5em;
+    
+}
+
+.problem-statement .tex-tabular {
+    margin: 1em 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+.problem-statement .tex-tabular td {
+    padding: 0.15em 0.7em;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-left {
+    border-left: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-right {
+    border-right: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-top {
+    border-top: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-border-bottom {
+    border-bottom: 1px solid;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-left {
+    text-align: left;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-center {
+    text-align: center;
+}
+
+.problem-statement .tex-tabular .tex-tabular-text-align-right {
+    text-align: right;
+}
+
+.problem-statement p {
+    margin: 0 0 1em 0;
+}
+
+.problem-statement p a, .problem-statement ul a, .problem-statement ol a, .problem-statement td a {
+    margin: 0;
+}
+
+.problem-statement .header {
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    margin-bottom: 0.25em;
+}
+
+.problem-statement .header .title {
+    font-size: 150%;
+    font-family: arial;
+}
+
+.problem-statement ul {
+    list-style: disc;
+    list-style-type: disc;
+    list-style-position: outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement ol {
+    list-style: decimal;
+    list-style-type: decimal;
+    list-style-position: outside;
+    margin: 0 0 1em 0;
+}
+
+.problem-statement li {
+    line-height: 1.5em;
+    margin-left: 3em;
+}
+
+.problem-statement .property-title {
+    display: inline;
+}
+
+.problem-statement .property-title:after {
+    content: ": ";
+}
+
+.problem-statement .time-limit, .problem-statement .memory-limit, .problem-statement .input-file, .problem-statement .output-file {
+    margin: 0 auto;
+}
+
+.problem-statement .legend {
+    margin-bottom: 1em;
+}
+
+.problem-statement .tutorial {
+    margin-bottom: 1em;
+}
+
+.problem-statement .section-title {
+    font-family: arial;
+    font-size: 115%;
+    font-weight: bold;
+}
+
+.problem-statement .input-specification,
+    .problem-statement .output-specification,
+    .problem-statement .sample-tests,
+    .problem-statement .author,
+    .problem-statement .resource,
+    .problem-statement .date {
+    /*margin-bottom: 1em;*/
+}
+
+.problem-statement .output-specification {
+    margin-bottom: 1em;
+}
+
+.problem-statement .sample-tests .sample-test {
+}
+
+.problem-statement .sample-tests .input, .problem-statement .sample-tests .output {
+    border: 1px solid #888;
+}
+
+.problem-statement .sample-tests .output {
+    margin-bottom: 1em;
+    position: relative;
+    top: -1px;
+}
+
+.problem-statement .sample-tests pre {
+    line-height: 1.25em;
+    padding: 0.25em;
+    margin: 0;
+    
+}
+
+.problem-statement .sample-tests .title {
+    font-family: arial;
+    padding: 0.25em;
+    border-bottom: 1px solid #888;
+    text-transform: lowercase;
+    font-weight: bold;
+}
+
+.problem-statement .tex-formula {
+    vertical-align: middle;
+    margin: 0;
+    border:medium none;
+    position: relative;
+    bottom: 2px;
+}
+
+.problem-statement .tex-span {
+    font-size: 125%;
+    font-family: times new roman;
+    white-space: nowrap;
+}
+
+.problem-statement .tex-font-size-tiny {
+    font-size: 70%;
+}
+
+.problem-statement .tex-font-size-script {
+    font-size: 75%;
+}
+
+.problem-statement .tex-font-size-footnotes {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-small {
+    font-size: 85%;
+}
+
+.problem-statement .tex-font-size-normal {
+    font-size: 100%;
+}
+
+.problem-statement .tex-font-size-large-1 {
+    font-size: 115%;
+}
+
+.problem-statement .tex-font-size-large-2 {
+    font-size: 130%;
+}
+
+.problem-statement .tex-font-size-large-3 {
+    font-size: 145%;
+}
+
+.problem-statement .tex-font-size-huge-1 {
+    font-size: 175%;
+}
+
+.problem-statement .tex-font-size-huge-2 {
+    font-size: 200%;
+}
+
+.problem-statement .tex-font-style-rm {
+}
+
+.problem-statement .tex-font-style-sf {
+    font-family: arial;
+}
+
+.problem-statement .tex-font-style-striked {
+    text-decoration: line-through;
+}
+
+.problem-statement .tex-font-style-tt {
+    font-size: 110%;
+    font-family: courier new;
+}
+
+.problem-statement .tex-font-style-md {
+}
+
+.problem-statement .tex-font-style-bf {
+    font-weight: bold;
+}
+
+.problem-statement .tex-font-style-underline {
+    text-decoration: underline;
+}
+
+.problem-statement .tex-font-style-up {
+}
+
+.problem-statement .tex-font-style-it {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sl {
+    font-style: italic;
+}
+
+.problem-statement .tex-font-style-sc {
+    text-transform: uppercase;
+}
+
+.problem-statement .tex-graphics {
+    max-width: 95%;
+    display: block;
+}
+
+.problem-statement .tex-tabular .tex-graphics {
+    max-width: 100%;
+}
+
+.problem-statement .input-output-copier {
+    font-size: 0.75rem;
+    float: right;
+    color: #888;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid rgb(185, 185, 185);
+    line-height: 0.8rem;
+    text-transform: none;
+}
+
+.problem-statement .input-output-copier:hover {
+    background-color: #def;
+}
+
+.problem-statement .test-example-line-even {
+    background-color: #E0E0E0;
+}
+
+</style>
+<DIV class="problem-statement"><DIV class="header"><DIV class="title">Караваны и Провинции</DIV><DIV class="time-limit"><DIV class="property-title">ограничение по времени на тест</DIV>2 секунды</DIV><DIV class="memory-limit"><DIV class="property-title">ограничение по памяти на тест</DIV>256 мегабайт</DIV><DIV class="input-file"><DIV class="property-title">ввод</DIV>стандартный ввод</DIV><DIV class="output-file"><DIV class="property-title">вывод</DIV>стандартный вывод</DIV></DIV><DIV class="legend"><P>Далекая страна содержит $$$n$$$ городов, соединенных $$$n - 1$$$ дорогами, при этом из любого города можно добраться до любого другого по дорогам страны.</P><P>Известно, что каждый город относится ровно к одной провинции. Город $$$v$$$ относится к провинции $$$t_v$$$. Обратите внимание, что конкретная провинция может являться любым подмножеством городов, и возможно из одного города провинции нельзя добраться до другого этой же провинции, проходя только через города этой провинции. Столицей является город номер $$$1$$$. </P><P>Банда разбойников собирается грабить караваны, которые будут идти через города страны. У каждого города есть коэффициент того, насколько удобно в нем грабить. В городе $$$v$$$ он равен $$$c_v$$$. </P><P>Вам приходят запросы двух типов: </P><P></P><OL> <LI> Изменить провинцию, к которой относится город $$$v$$$, на $$$t_{new}$$$ <P></P><P></P></LI><LI> В $$$k$$$ городах с номерами $$$a_1, a_2, \ldots, a_k$$$ появляется по одному каравану, которые идут в столицу (город с номером 1) по кратчайшему пути. Разбойники выбирают один город, который находится в провинции $$$t$$$, после чего грабят все караваны, которые пройдут через этот город. Если разбойники ограбят караваны в городе с номером $$$v$$$, то они получат $$$c_v \cdot num_v$$$, где $$$c_v$$$&nbsp;&mdash; коэффициент города $$$v$$$, а $$$num_v$$$ это количество караванов, проходящих через этот город. </LI></OL> <P></P><P>Определите максимальный ущерб, равный количеству награбленного разбойниками, для каждого запроса второго типа. Если в провинции, указанной в запросе, нет ни одного города, то ответ на этот запрос равен $$$0$$$.</P></DIV><P></P><P></P><DIV class="input-specification"><DIV class="section-title">Входные данные</DIV><P></P><P>В первой строке даны два целых числа $$$n$$$ и $$$q$$$ ($$$2 \le n \le 200\,000, 1 \le q \le 200\,000$$$)&nbsp;&mdash; количество городов и количество запросов.</P><P>Во второй строке дано $$$n - 1$$$ целое число $$$p_2, p_3, \ldots, p_n$$$ ($$$1 \le p_i &lt; i$$$), где число $$$p_i$$$ означает, что существует дорога между городами $$$i$$$ и $$$p_i$$$.</P><P>В третьей строке дано $$$n$$$ целых чисел $$$t_1, t_2, \ldots, t_n$$$ ($$$1 \le t_i \le n$$$)&nbsp;&mdash; номера провинций у городов.</P><P>В четвертой строке дано $$$n$$$ целых чисел $$$c_1, c_2, \ldots, c_n$$$ ($$$1 \le c_i \le 10^9$$$)&nbsp;&mdash; коэффициенты успешности грабежа.</P><P>Далее идет $$$q$$$ строк описаний запросов. В начале каждой строки дано одно целое число $$$x_i$$$ ($$$1 \le x_i \le 2$$$)&nbsp;&mdash; тип запроса.</P><P></P><OL> <LI> Если $$$x_i = 1$$$, то далее идет два целых числа $$$v$$$ и $$$t_{new}$$$ ($$$1 \le v, t_{new} \le n$$$)&nbsp;&mdash; номер города, у которого меняется провинция, и номер его новой провинции.<P></P><P></P></LI><LI> Если $$$x_i = 2$$$, то далее идут целые числа $$$t$$$ и $$$k$$$, и $$$k$$$ целых чисел $$$a_1, a_2, \ldots, a_k$$$ ($$$1 \le t, k, a_i \le n$$$)&nbsp;&mdash; номер провинции, в городе которой можно грабить; количество городов, из которых выходят караваны; и номера городов, из которых входят караваны. Гарантируется, что в одном запросе все $$$a_i$$$ различны. Также гарантируется, что сумма $$$k$$$ по всем запросам второго типа не превышает $$$200\,000$$$. </LI></OL></DIV><P></P><P></P><DIV class="output-specification"><DIV class="section-title">Выходные данные</DIV><P></P><P>На каждый запрос второго типа выведите одно число&nbsp;&mdash; максимальное число, которое разбойники смогут получить. Если в провинции, указанной в запросе, нет ни одного города, то ответ на этот запрос равен $$$0$$$.</P></DIV><P></P><P></P><DIV class="scoring"><DIV class="section-title">Система оценки</DIV><P></P><P>Все тесты можно разделить на следующие группы:</P><P></P><CENTER>  <TABLE class="tex-tabular"><TBODY><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"><SPAN class="tex-font-style-bf">Группа</SPAN></TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"><SPAN class="tex-font-style-bf">Макс. балл</SPAN></TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"><SPAN class="tex-font-style-bf">Доп. ограничения</SPAN></TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"><SPAN class="tex-font-style-bf">Комментарий</SPAN></TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">0</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">0</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&ndash;</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">Тесты из условия.</TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">1</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">18</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$n, q, \sum k_i \leqslant 1000$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"></TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">2</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">14</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">Нет запросов первого типа, а также $$$t_i = 1$$$.</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"></TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">3</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">10</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">Нет запросов первого типа.</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"></TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">4</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">18</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$p_i = i - 1$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"></TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">5</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">18</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">$$$p_i = \lfloor \frac{i}{2} \rfloor$$$</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"></TD></TR><TR><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">6</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">22</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom">&ndash;</TD><TD class="tex-tabular-border-left tex-tabular-text-align-center tex-tabular-border-right tex-tabular-border-top tex-tabular-border-bottom"></TD></TR></TBODY></TABLE> </CENTER></DIV><P></P><P></P><DIV class="sample-tests"><DIV class="section-title">Пример</DIV><P></P><P></P><DIV class="sample-test"><DIV class="input"><DIV class="title">Входные данные</DIV><PRE class="content">
+<DIV >4 4</DIV><DIV >1 2 2</DIV><DIV >1 1 3 3</DIV><DIV >2 3 10 7</DIV><DIV >2 3 2 3 4</DIV><DIV >2 1 2 4 3</DIV><DIV >1 3 1</DIV><DIV >2 1 2 3 4</DIV></PRE></DIV><DIV class="output"><DIV class="title">Выходные данные</DIV><PRE class="content">
+10
+6
+10
+</PRE></DIV></DIV></DIV><P></P><P></P><DIV class="note"><DIV class="section-title">Примечание</DIV><P></P><P>В первом запросе караваны идут из городов с номерами $$$3$$$ и $$$4$$$ и нужно ограбить их в городе из третьей провинции. Это те же самые города с номерами $$$3$$$ и $$$4$$$, через каждый из которых пройдет по одному каравану. Поэтому разбойники ограбят караваны в третьем городе и получат $$$c_3 \cdot 1 = 10 \cdot 1 = 10$$$. </P><P>Во втором запросе караваны также идут из городов с номерами $$$3$$$ и $$$4$$$, но теперь нужно ограбить их в городе из первой провинции. В первой провинции находятся города $$$1$$$ и $$$2$$$, через каждый из которых пройдет два каравана. Среди них разбойники выбирают город $$$2$$$, потому что $$$c_2 &gt; c_1$$$ и ответ на этот запрос равен $$$c_2 \cdot 2 = 3 \cdot 2 = 6$$$.</P><P>В третьем провинция для города $$$3$$$ изменяется на $$$1$$$.</P><P>В четвертом запросе караваны снова идут из городов с номерами $$$3$$$ и $$$4$$$, и нужно ограбить караваны в городе из первой провинции. То есть разбойники могут ограбить караваны в одном из городов с номерами $$$1, 2$$$ или $$$3$$$. Через города с номерами $$$1$$$ и $$$2$$$ пройдет два каравана, а через город $$$3$$$ только один. Разбойникам выгодно ограбить караваны в городе $$$3$$$ и получить $$$c_3 \cdot 1 = 10 \cdot 1 = 10$$$.</P></DIV></DIV><P></P><P>  </P>

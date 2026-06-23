@@ -41,7 +41,32 @@
 </div>
 {% endif %}
 
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+<div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px">
+
+  <!-- ── Лимиты ────────────────────────────────────────────────────── -->
+  <div class="card">
+    <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Лимиты</h2>
+    <form method="post" action="/admin/task/{{ task.id }}/update-limits">
+      <div class="form-group" style="margin-bottom:10px">
+        <label style="font-size:12px">Название задачи</label>
+        <input class="form-input" type="text" name="title"
+               value="{{ task.title }}" placeholder="{{ task.title }}" required>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px">
+        <div class="form-group" style="margin:0">
+          <label style="font-size:12px">Время (сек)</label>
+          <input class="form-input" type="number" name="time_limit"
+                 value="{{ task.time_limit }}" step="0.1" min="0.5" max="30" required>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label style="font-size:12px">Память (МБ)</label>
+          <input class="form-input" type="number" name="memory_limit"
+                 value="{{ task.memory_limit }}" step="1" min="32" max="4096" required>
+        </div>
+      </div>
+      <button class="btn btn--primary" type="submit" style="width:100%">Сохранить →</button>
+    </form>
+  </div>
 
   <!-- ── Условие ───────────────────────────────────────────────────── -->
   <div class="card">
@@ -208,18 +233,37 @@
 
 <!-- ── Структура файлов ──────────────────────────────────────────────── -->
 <div class="card" style="margin-top:20px; margin-bottom:32px">
-  <h2 style="font-size:15px; font-weight:600; margin-bottom:16px">Файловая структура на сервере</h2>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+    <h2 style="font-size:15px; font-weight:600; margin:0">Файловая структура на сервере</h2>
+    <div style="display:flex; gap:6px; flex-wrap:wrap">
+      <a href="/admin/task/{{ task.id }}/download/tests"     class="btn btn--outline btn--small" style="font-size:11px; padding:3px 8px">⬇ Тесты</a>
+      <a href="/admin/task/{{ task.id }}/download/checker"   class="btn btn--outline btn--small" style="font-size:11px; padding:3px 8px">⬇ Чекер</a>
+      <a href="/admin/task/{{ task.id }}/download/solutions" class="btn btn--outline btn--small" style="font-size:11px; padding:3px 8px">⬇ Решения</a>
+      <a href="/admin/task/{{ task.id }}/download/statement" class="btn btn--outline btn--small" style="font-size:11px; padding:3px 8px">⬇ Условие</a>
+    </div>
+  </div>
   <div style="font-family:var(--mono); font-size:11px; color:var(--text-3); margin-bottom:8px; word-break:break-all">
     {{ data_dir }}
   </div>
-  <div style="font-family:var(--mono); font-size:12px; line-height:1.8">
+  <div style="font-family:var(--mono); font-size:12px; line-height:2">
     {% for f in file_tree %}
-      <div style="padding-left:{{ f.depth * 16 }}px; color:{{ 'var(--text-2)' if f.is_dir else 'var(--text-1)' }}">
+      <div style="padding-left:{{ f.depth * 16 }}px; display:flex; align-items:center; gap:8px; min-height:22px">
         {% if f.is_dir %}
-          📁 {{ f.basename }}/
+          <span style="color:var(--text-2)">📁 {{ f.basename }}/</span>
+          {% if f.basename == "tests" %}
+            <a href="/admin/task/{{ task.id }}/download/tests" class="btn btn--outline btn--small"
+               style="font-size:10px; padding:1px 6px">⬇ zip</a>
+          {% elif f.basename == "solutions" %}
+            <a href="/admin/task/{{ task.id }}/download/solutions" class="btn btn--outline btn--small"
+               style="font-size:10px; padding:1px 6px">⬇ zip</a>
+          {% endif %}
         {% else %}
-          📄 {{ f.basename }}
-          <span style="color:var(--text-3)"> ({{ (f.size / 1024) | round(1) }} KB)</span>
+          <a href="/admin/task/{{ task.id }}/file/{{ f.rel_path }}"
+             style="color:var(--text-1); text-decoration:none; display:flex; align-items:center; gap:6px"
+             download="{{ f.basename }}" title="{{ f.rel_path }}">
+            📄 {{ f.basename }}
+            <span style="color:var(--text-3); font-size:11px">({{ (f.size / 1024) | round(1) }} KB)</span>
+          </a>
         {% endif %}
       </div>
     {% endfor %}

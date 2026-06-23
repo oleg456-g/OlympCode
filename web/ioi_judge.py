@@ -42,8 +42,9 @@ def judge_ioi(
     memory_limit: int,
     checker_path: str,
     scoring_type: ScoringType,
-    test_scores: list[float],    # балл за каждый тест из problem.xml (индекс = номер теста - 1)
-    subtasks: list | None,       # список Subtask объектов для ioi_groups
+    test_scores: list[float],
+    subtasks: list | None,
+    on_test_start=None,   # callback(test_num: int) — вызывается перед каждым тестом
 ) -> IOIResult:
     with tempfile.TemporaryDirectory() as tmpdir:
         # Компилируем
@@ -67,7 +68,8 @@ def judge_ioi(
 
         return _run_ioi_tests(
             cmd, tmpdir, tests_path, time_limit,
-            checker_path, scoring_type, test_scores, subtasks
+            checker_path, scoring_type, test_scores, subtasks,
+            on_test_start=on_test_start,
         )
 
 
@@ -89,7 +91,8 @@ def _compile_cpp(code: str, tmpdir: str) -> tuple[str, str | None]:
 
 def _run_ioi_tests(
     cmd, tmpdir, tests_path, time_limit,
-    checker_path, scoring_type, test_scores, subtasks
+    checker_path, scoring_type, test_scores, subtasks,
+    on_test_start=None,
 ) -> IOIResult:
     tests_dir = Path(tests_path)
     if not tests_dir.exists():
@@ -101,11 +104,58 @@ def _run_ioi_tests(
         key=lambda p: int(p.stem) if p.stem.isdigit() else 0
     )
     if not in_files:
+        # Поддержка .dat формата (например Яндекс.Контест / ejudge)
+        in_files = sorted(
+            tests_dir.glob("*.dat"),
+            key=lambda p: int(p.stem) if p.stem.isdigit() else 0
+        )
+    if not in_files:
+        # Числовые файлы без расширения (Polygon-стиль)
+        in_files = sorted(
+            [f for f in tests_dir.iterdir() if f.is_file() and f.name.isdigit()],
+            key=lambda p: int(p.name)
+        )
+    if not in_files:
         return IOIResult(Verdict.RE, 0, sum(test_scores), error_output="Тесты не найдены")
 
     max_score   = sum(test_scores)
+    # Для IOI_GROUPS реальный максимум включает баллы complete-group подзадач
+    # которые хранятся в Subtask.max_score, а не в test_scores (там 0)
+    if scoring_type == ScoringType.IOI_GROUPS and subtasks:
+        max_score = sum(st.max_score for st in subtasks)
     test_details: list[TestDetail] = []
     max_time = 0.0
+
+    # Для IOI_GROUPS нужно запускать ВСЕ тесты входящие в Subtask,
+    # даже если test_score == 0 (complete-group группы хранят балл в
+    # Subtask.max_score, а не в test_scores). Иначе complete-group тесты
+    # будут пропущены и при проверке зависимостей окажется что группа
+    # "не прошла" → зависящие группы получат 0 баллов.
+    if scoring_type == ScoringType.IOI_GROUPS and subtasks:
+        subtask_test_nums: set[int] = set()
+        for st in subtasks:
+            for n in range(st.test_from, st.test_to + 1):
+                subtask_test_nums.add(n)
+    else:
+        subtask_test_nums = set()
+
+    # Для IOI_GROUPS: определяем какие группы можно пропустить из-за
+    # неудовлетворённых зависимостей ДО начала тестирования.
+    # Это избавляет от бессмысленного запуска тестов, которые всё равно
+    # не дадут баллов из-за того что зависимые группы ещё не пройдены.
+    import json as _json
+    skipped_subtask_nums: set[int] = set()
+    if scoring_type == ScoringType.IOI_GROUPS and subtasks:
+        # Группы которые имеют зависимости, нужно проверять по-прежнему
+        # их тесты — нам нужно знать пройдены ли они сами. Пропускаем
+        # только те группы, у которых ВСЕ зависимые группы уже заведомо
+        # не могут быть пройдены (т.к. мы их тоже пропускаем).
+        # Итерируем по топологическому порядку (предполагаем что Subtask
+        # хранится в порядке номеров, и зависимости всегда на меньшие номера).
+        for st in sorted(subtasks, key=lambda s: s.number):
+            deps = _json.loads(st.depends_on_json) if st.depends_on_json else []
+            if any(dep in skipped_subtask_nums for dep in deps):
+                skipped_subtask_nums.add(st.number)
 
     for in_file in in_files:
         out_file = in_file.with_suffix(".ans")
@@ -115,10 +165,27 @@ def _run_ioi_tests(
             continue
 
         test_num = int(in_file.stem) if in_file.stem.isdigit() else 0
-        # Балл за этот тест (индекс = test_num - 1, если нет — 0)
         test_score = test_scores[test_num - 1] if 0 < test_num <= len(test_scores) else 0.0
-        if test_score <= 0:
+
+        if test_score <= 0 and test_num not in subtask_test_nums:
             continue
+
+        # Пропускаем тест если его группа зависит от непройденных групп.
+        # Тест получит WA автоматически (он не в test_details → score=0).
+        if scoring_type == ScoringType.IOI_GROUPS and subtasks and skipped_subtask_nums:
+            test_subtask = next(
+                (st for st in subtasks if st.test_from <= test_num <= st.test_to), None
+            )
+            if test_subtask and test_subtask.number in skipped_subtask_nums:
+                test_details.append(TestDetail(test_num, Verdict.WA, 0.0, 0.0))
+                continue
+
+        # Уведомляем о начале теста
+        if on_test_start:
+            try:
+                on_test_start(test_num)
+            except Exception:
+                pass
 
         with open(in_file, "r", encoding="utf-8") as f_in:
             start = time.perf_counter()
