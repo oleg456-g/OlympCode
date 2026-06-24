@@ -32,6 +32,8 @@ async def submit(
     db: Session   = Depends(get_db),
 ):
     user = require_user(request, db)
+    if len(code.encode('utf-8')) > 5 * 1024 * 1024:
+        return JSONResponse({"error": "Размер кода превышает 5 МБ"}, status_code=400)
     task = db.query(Task).filter_by(id=task_id).first()
     if not task:
         return JSONResponse({"error": "Задача не найдена"}, status_code=404)
@@ -122,13 +124,6 @@ async def submission_detail(submission_id: int, request: Request, contest_id: in
     if contest_id:
         from models import Contest
         contest = db.query(Contest).filter_by(id=contest_id).first()
-
-    # Если contest_id не передан — ищем любой контест где есть эта задача
-    if not contest and sub.task_id:
-        from models import ContestTask, Contest
-        ct = db.query(ContestTask).filter_by(task_id=sub.task_id).first()
-        if ct:
-            contest = db.query(Contest).filter_by(id=ct.contest_id).first()
 
     return templates.TemplateResponse("submissions/detail.html", {
         "request": request,

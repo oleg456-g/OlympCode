@@ -5,15 +5,18 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pathlib import Path
+from dotenv import load_dotenv
 
 from database import Base, engine, SessionLocal
 from models import *  # noqa
 from importer import import_all
 from routers import auth, tasks, submissions, profile, contests, admin
 
+load_dotenv()
+
 app = FastAPI(title="OlympCode")
 
-app.add_middleware(SessionMiddleware, secret_key=os.environ["SESSION_SECRET"])
+app.add_middleware(SessionMiddleware, secret_key=os.environ["SESSION_KEY"])
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 _contests_data = Path(__file__).parent.parent / "contests_data"

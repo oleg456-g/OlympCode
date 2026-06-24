@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 import markdown as md
 
@@ -44,7 +44,7 @@ def _rewrite_statement_assets(html: str, task: Task) -> str:
 
 @router.get("/")
 async def index(request: Request, db: Session = Depends(get_db)):
-    user   = get_current_user(request, db)
+    return RedirectResponse("/contests/", status_code=302)
     topics = db.query(Topic).order_by(Topic.title).all()
 
     topics_data = []
@@ -107,6 +107,8 @@ async def topic_page(slug: str, request: Request, db: Session = Depends(get_db))
 @router.get("/task/{task_id}")
 async def task_page(task_id: int, request: Request, contest_id: int | None = None, db: Session = Depends(get_db)):
     user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(f"/auth/login?next=/task/{task_id}", status_code=302)
     task = db.query(Task).filter_by(id=task_id).first()
     if not task:
         return render_404(request, user)
@@ -130,14 +132,6 @@ async def task_page(task_id: int, request: Request, contest_id: int | None = Non
             contest_task = db.query(ContestTask).filter_by(
                 contest_id=contest_id, task_id=task_id
             ).first()
-
-    # Если contest_id не передан — ищем любой контест где есть эта задача
-    if not contest:
-        ct = db.query(ContestTask).filter_by(task_id=task_id).first()
-        if ct:
-            from models import Contest
-            contest = db.query(Contest).filter_by(id=ct.contest_id).first()
-            contest_task = ct
 
     if task.statement_html:
         statement_html = _rewrite_statement_assets(task.statement_html, task)
