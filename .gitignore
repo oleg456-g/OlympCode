@@ -1,3 +1,5 @@
+\web\__pycache__
+\.vscode
 \venv
 .env
-\web\olymp.db
+themes.txt
