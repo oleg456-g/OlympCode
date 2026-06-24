@@ -131,6 +131,14 @@ async def task_page(task_id: int, request: Request, contest_id: int | None = Non
                 contest_id=contest_id, task_id=task_id
             ).first()
 
+    # Если contest_id не передан — ищем любой контест где есть эта задача
+    if not contest:
+        ct = db.query(ContestTask).filter_by(task_id=task_id).first()
+        if ct:
+            from models import Contest
+            contest = db.query(Contest).filter_by(id=ct.contest_id).first()
+            contest_task = ct
+
     if task.statement_html:
         statement_html = _rewrite_statement_assets(task.statement_html, task)
     elif task.statement_md:

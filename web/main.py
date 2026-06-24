@@ -13,13 +13,18 @@ from routers import auth, tasks, submissions, profile, contests, admin
 
 app = FastAPI(title="OlympCode")
 
-app.add_middleware(SessionMiddleware, secret_key="CHANGE_ME_IN_PRODUCTION")
+app.add_middleware(SessionMiddleware, secret_key=os.environ["SESSION_SECRET"])
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 _contests_data = Path(__file__).parent.parent / "contests_data"
 
 app.include_router(auth.router)
 app.include_router(tasks.router)
+
+@app.get("/", include_in_schema=False)
+async def root_redirect():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/contests/", status_code=302)
 app.include_router(submissions.router)
 app.include_router(profile.router)
 app.include_router(contests.router)
@@ -37,11 +42,6 @@ async def startup():
         if "format" not in col_names:
             conn.execute(text(
                 "ALTER TABLE contests ADD COLUMN format VARCHAR(16) DEFAULT 'polygon'"
-            ))
-
-        if "is_visible" not in col_names:
-            conn.execute(text(
-                "ALTER TABLE contests ADD COLUMN is_visible INTEGER NOT NULL DEFAULT 0"
             ))
 
         # ── Миграции tasks ─────────────────────────────────────────────────

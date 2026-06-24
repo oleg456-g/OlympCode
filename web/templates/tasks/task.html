@@ -14,7 +14,7 @@
     <span>›</span>
     <span>{% if contest_task.letter %}{{ contest_task.letter }}. {% endif %}{{ task.title }}</span>
   {% else %}
-    <a href="/">Задачи</a>
+    <a href="/contests/">Олимпиады</a>
     <span>›</span>
     <a href="/topic/{{ task.topic.slug }}">{{ task.topic.title }}</a>
     <span>›</span>
@@ -542,11 +542,11 @@ async function submitCode() {
   try {
     const res  = await fetch(`/submissions/submit/${TASK_ID}`, { method: 'POST', body: form });
     const data = await res.json();
-    if (data.error) { console.error('submit error:', data.error); return; }
+    if (data.error) { alert(data.error); return; }
     subId  = data.submission_id;
     subNum = data.task_submission_number;
   } catch (err) {
-    console.error('Ошибка отправки:', err.message);
+    alert('Ошибка отправки: ' + err.message);
     return;
   }
 

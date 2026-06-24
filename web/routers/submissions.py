@@ -123,6 +123,13 @@ async def submission_detail(submission_id: int, request: Request, contest_id: in
         from models import Contest
         contest = db.query(Contest).filter_by(id=contest_id).first()
 
+    # Если contest_id не передан — ищем любой контест где есть эта задача
+    if not contest and sub.task_id:
+        from models import ContestTask, Contest
+        ct = db.query(ContestTask).filter_by(task_id=sub.task_id).first()
+        if ct:
+            contest = db.query(Contest).filter_by(id=ct.contest_id).first()
+
     return templates.TemplateResponse("submissions/detail.html", {
         "request": request,
         "user":    user,

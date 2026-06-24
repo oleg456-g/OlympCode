@@ -1,41 +1,92 @@
 {% extends "base.html" %}
-{% block title %}{{ topic.title }} — OlympCode{% endblock %}
+{% block title %}{{ user.username }} — OlympCode{% endblock %}
 
 {% block content %}
-<div class="breadcrumb">
-  <a href="/">Задачи</a>
-  <span>›</span>
-  <span>{{ topic.title }}</span>
+<div class="page-header">
+  <h1 style="font-family:var(--mono)">{{ user.username }}</h1>
+  <p style="color:var(--text-3); font-size:13px">
+    На платформе с {{ user.created_at.strftime('%d.%m.%Y') }}
+  </p>
 </div>
 
-<div class="page-header">
-  <h1>{{ topic.title }}</h1>
-  <p>{{ tasks|length }} задач в этой теме</p>
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-card__value">{{ stats.tasks_solved }}</div>
+    <div class="stat-card__label">Задач решено</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value">{{ stats.total }}</div>
+    <div class="stat-card__label">Посылок всего</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value">
+      {% if stats.total > 0 %}
+        {{ ((stats.accepted / stats.total) * 100) | int }}%
+      {% else %}
+        —
+      {% endif %}
+    </div>
+    <div class="stat-card__label">Успешных</div>
+  </div>
 </div>
 
 <div class="card">
-  <ul class="task-list">
-    {% for task in tasks %}
-    <li class="task-list__item">
-      <span class="task-num">{{ task.order_in_topic }}</span>
-      <a href="/task/{{ task.id }}" class="task-link">{{ task.title }}</a>
-      <div style="display:flex; align-items:center; gap:12px">
-        <span style="font-size:12px; color:var(--text-3); font-family:var(--mono)">
-          {{ task.time_limit }}с / {{ task.memory_limit }}МБ
-        </span>
-        {% if user %}
-          {% set status = task_statuses.get(task.id) %}
-          {% if status %}
-            <span class="badge badge--{{ status | lower }}">{{ status }}</span>
-          {% endif %}
-        {% endif %}
-      </div>
-    </li>
-    {% else %}
-    <li style="padding: 20px; color: var(--text-2); text-align:center">
-      Задачи в этой теме не найдены
-    </li>
-    {% endfor %}
-  </ul>
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+    <h2 style="font-size:15px; font-weight:600; margin: 0;">Последние посылки</h2>
+    
+    <div class="limit-selector" style="display: flex; gap: 8px; align-items: center;">
+      <span style="font-size: 13px; color: var(--text-2);">Показывать:</span>
+      {% for count in [10, 30, 50, 100] %}
+        <a href="/profile?limit={{ count }}" 
+           class="btn {% if current_limit == count %}btn--primary{% else %}btn--outline{% endif %} btn--small">
+           {{ count }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if submissions %}
+  <table class="submissions-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Задача</th>
+        <th>Вердикт</th>
+        <th>Язык</th>
+        <th>Время</th>
+        <th>Дата</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in submissions %}
+      <tr>
+        <td><a href="/submissions/{{ s.id }}" style="color:var(--blue)">{{ s.id }}</a></td>
+        <td>
+          <a href="/task/{{ s.task.id }}" style="color:var(--text)">{{ s.task.title }}</a>
+        </td>
+        <td>
+          <span class="badge badge--{{ s.verdict.value.lower() }}">
+            {% if s.task.scoring_type.value != 'icpc' and s.score is not none %}
+              {{ s.score | format_score }}/{{ s.task.max_score | format_score }}
+            {% else %}
+              {{ s.verdict.value }}
+            {% endif %}
+          </span>
+        </td>
+        <td style="font-family:var(--mono)">{{ s.language }}</td>
+        <td style="font-family:var(--mono)">
+          {{ '%.2f'|format(s.execution_time) + 'с' if s.execution_time else '—' }}
+        </td>
+        <td style="color:var(--text-3)">{{ s.submitted_at.strftime('%d.%m %H:%M') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div style="text-align:center; padding:40px; color:var(--text-2)">
+    <p>Посылок пока нет</p>
+    <a href="/contests/" class="btn btn--outline" style="margin-top:16px">К олимпиадам</a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}
