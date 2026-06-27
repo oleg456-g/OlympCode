@@ -12,7 +12,7 @@ from models import *  # noqa
 from importer import import_all
 from routers import auth, tasks, submissions, profile, contests, admin
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 app = FastAPI(title="OlympCode")
 
@@ -37,6 +37,10 @@ app.include_router(admin.router)
 @app.on_event("startup")
 async def startup():
     from sqlalchemy import text
+    with engine.connect() as conn:
+        conn.execute(text("PRAGMA journal_mode=WAL"))
+        conn.execute(text("PRAGMA synchronous=NORMAL"))
+        conn.commit()    
     Base.metadata.create_all(bind=engine)
     with engine.connect() as conn:
         # ── Миграции contests ──────────────────────────────────────────────

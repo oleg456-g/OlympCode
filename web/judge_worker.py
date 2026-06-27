@@ -15,9 +15,14 @@ import json
 import threading
 import time
 import traceback
+import queue
 from datetime import datetime
 
 MAX_WORKERS = 2  # сколько посылок проверять одновременно
+
+_box_pool = queue.Queue()
+for i in range(MAX_WORKERS):
+    _box_pool.put(i)
 
 # In-memory хранилище текущего теста для RUNNING посылок
 # { submission_id: test_number }  — сбрасывается при завершении
@@ -101,15 +106,17 @@ def _poll_loop():
 def _run_with_semaphore(submission_id: int):
     """Ожидает свободного слота и запускает _run_judge."""
     _semaphore.acquire()
+    box_id = _box_pool.get()
     try:
-        _run_judge(submission_id)
+        _run_judge(submission_id, box_id=box_id)
     finally:
+        _box_pool.put(box_id)
         _semaphore.release()
 
 
 # ── Логика тестирования (перенесена из submissions.py) ───────────────────────
 
-def _run_judge(submission_id: int) -> None:
+def _run_judge(submission_id: int, box_id: int) -> None:
     from database import SessionLocal
     from models import Submission, Task, Verdict, ScoringType, TestResult
     from judge.judge import judge
@@ -223,6 +230,7 @@ def _run_judge(submission_id: int) -> None:
                 memory_limit  = task.memory_limit,
                 checker_path  = task.checker_path,
                 on_test_start = on_test_start,
+                box_id        = box_id,
             )
             sub.verdict        = result.verdict
             sub.failed_test    = result.failed_test

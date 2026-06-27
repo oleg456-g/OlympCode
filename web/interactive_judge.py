@@ -78,6 +78,7 @@ def _run_interactive_test(
     in_file: Path,
     checker_path: str,
     time_limit: float,
+    memory_limit: int,
     tmpdir: str,
     test_num: int,
     test_score: float,
@@ -119,6 +120,11 @@ def _run_interactive_test(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
+        def _set_limits():
+            import resource
+            mem_bytes = memory_limit * 1024 * 1024
+            resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
+            resource.setrlimit(resource.RLIMIT_CPU, (int(time_limit) + 1, int(time_limit) + 2))
 
         # Запускаем решение участника
         proc_solution = subprocess.Popen(
@@ -126,6 +132,7 @@ def _run_interactive_test(
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            preexec_fn=_set_limits if os.name != "nt" else None,
         )
     except OSError as e:
         return TestDetail(test_num, Verdict.RE, 0.0, 0.0)
@@ -145,7 +152,6 @@ def _run_interactive_test(
         args=(proc_interactor.stdout, proc_solution.stdin, relay_errors),
         daemon=True,
     )
-
     start = time.perf_counter()
     t_sol_to_int.start()
     t_int_to_sol.start()
@@ -389,6 +395,7 @@ def judge_interactive(
                 in_file=in_file,
                 checker_path=checker_path,
                 time_limit=time_limit,
+                memory_limit=memory_limit,
                 tmpdir=tmpdir,
                 test_num=test_num,
                 test_score=test_score,

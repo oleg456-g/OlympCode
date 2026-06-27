@@ -592,7 +592,7 @@ def _resolve_interactor(task_root: Path, dest_dir: Path, interactor_source_path:
         tmp_build_path = Path(tmp_build_dir)
         temp_exe = tmp_build_path / final_exe_name
 
-        cmd = ["g++", "-O2", "-std=c++17", str(src_path), "-o", str(temp_exe)]
+        cmd = ["g++", "-O2", "-std=c++23", str(src_path), "-o", str(temp_exe)]
         if testlib_dir:
             cmd += [f"-I{testlib_dir}"]
 
@@ -603,7 +603,7 @@ def _resolve_interactor(task_root: Path, dest_dir: Path, interactor_source_path:
             return ""
 
         if result.returncode != 0:
-            print(f"[polygon] Ошибка компиляции interactor:\n{result.stderr[:500]}")
+            print(f"[polygon] Ошибка компиляции interactor:\n{result.stderr[:500]}", flush=True)
             return ""
 
         dest_dir.mkdir(parents=True, exist_ok=True)
@@ -793,7 +793,7 @@ def _compile_checker(task_root: Path, dest_dir: Path) -> str:
         tmp_build_path = Path(tmp_build_dir)
         temp_exe = tmp_build_path / final_exe_name
 
-        cmd = ["g++", "-O2", "-std=c++17", str(check_src), "-o", str(temp_exe)]
+        cmd = ["g++", "-O2", "-std=c++23", str(check_src), "-o", str(temp_exe)]
         if testlib_dir:
             cmd += [f"-I{testlib_dir}"]
 
