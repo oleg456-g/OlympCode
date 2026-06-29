@@ -16,6 +16,7 @@ import threading
 import time
 import traceback
 import queue
+import select
 from datetime import datetime
 
 MAX_WORKERS = 2  # сколько посылок проверять одновременно
@@ -122,7 +123,7 @@ def _run_judge(submission_id: int, box_id: int) -> None:
     from judge.judge import judge
     from ioi_judge import judge_ioi
     from mosh_judge import judge_mosh
-    from interactive_judge import judge_interactive
+    from interactive_judge import judge_interactive_isolate
 
     db = SessionLocal()
     try:
@@ -147,7 +148,7 @@ def _run_judge(submission_id: int, box_id: int) -> None:
             set_current_test(submission_id, test_num)
 
         if task.is_interactive and task.interactor_path:
-            result = judge_interactive(
+            result = judge_interactive_isolate(
                 code            = sub.code,
                 language        = sub.language,
                 tests_path      = task.tests_path,

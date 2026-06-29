@@ -1,39 +1,34 @@
 """
-Судья для интерактивных задач Polygon.
+Изолированный судья для интерактивных задач.
 
-Запускает два процесса одновременно:
-  - программу участника
-  - интерактор (interact.exe / interactor)
-
-Соединяет их stdout→stdin в обе стороны через два relay-потока.
-После завершения запускает checker на output-файл интерактора.
-
-Возвращает IOIResult (совместим и с ICPC и с IOI scoring):
-  - ICPC: смотрим только verdict (AC/WA/TLE/RE/CE)
-  - IOI:  смотрим score по каждому тесту
+Архитектура:
+  - Решение запускается внутри isolate box
+  - Интерактор запускается на хосте (доверенный код)
+  - Общение через два named pipe (FIFO), bind-mounted внутрь box
+  - Wall-таймер на стороне судьи
 """
 
 import os
+import shutil
 import subprocess
 import tempfile
-import threading
 import time
-from dataclasses import dataclass, field
+import signal
 from pathlib import Path
 
 from models import Verdict
-
-# Переиспользуем IOIResult и TestDetail из ioi_judge — структуры идентичны
 from ioi_judge import IOIResult, TestDetail
 
+def _isolate_cleanup(box_id):
+    subprocess.run(["isolate", "--box-id", str(box_id), "--cleanup"],
+                   capture_output=True, timeout=10)
 
-# ── Компиляция ────────────────────────────────────────────────────────────────
+
+# ── Компиляция (как в interactive_judge) ─────────────────────────────────────
 
 def _compile_cpp(code: str, tmpdir: str) -> tuple[str, str | None]:
     src = os.path.join(tmpdir, "solution.cpp")
     exe = os.path.join(tmpdir, "solution")
-    if os.name == "nt":
-        exe += ".exe"
     with open(src, "w", encoding="utf-8") as f:
         f.write(code)
     result = subprocess.run(
@@ -45,34 +40,9 @@ def _compile_cpp(code: str, tmpdir: str) -> tuple[str, str | None]:
     return exe, None
 
 
-# ── Relay-поток ───────────────────────────────────────────────────────────────
+# ── Один тест в isolate ──────────────────────────────────────────────────────
 
-def _relay(src, dst, error_box: list):
-    """
-    Перекачивает байты из src в dst построчно.
-    Работает в отдельном потоке.
-    error_box — список для передачи ошибки наружу (mutable box pattern).
-    """
-    try:
-        for line in src:
-            try:
-                dst.write(line)
-                dst.flush()
-            except (BrokenPipeError, OSError):
-                # Получатель закрылся — нормальное завершение диалога
-                break
-    except Exception as e:
-        error_box.append(str(e))
-    finally:
-        try:
-            dst.close()
-        except Exception:
-            pass
-
-
-# ── Один тест ─────────────────────────────────────────────────────────────────
-
-def _run_interactive_test(
+def _run_interactive_test_isolate(
     solution_cmd: list[str],
     interactor_path: str,
     in_file: Path,
@@ -82,227 +52,231 @@ def _run_interactive_test(
     tmpdir: str,
     test_num: int,
     test_score: float,
+    box_id: int,
 ) -> TestDetail:
-    """
-    Запускает один тест интерактивной задачи.
-
-    Интерактор вызывается как:
-        interactor <input_file> <interactor_output_file>
-    где <interactor_output_file> — файл куда интерактор пишет финальный
-    результат через tout (он же идёт checker'у как ouf).
-
-    Для интерактивных задач эталонного ответа (.a/.ans/.out) может не быть —
-    в этом случае создаём пустой файл-заглушку для ans-аргумента checker'а.
-    Большинство интерактивных checker'ов проверяют только ouf (результат
-    от интерактора) и не используют ans, либо генерируют его сами.
-    """
     interactor_output = os.path.join(tmpdir, f"interact_out_{test_num}.txt")
+    fifo_dir = os.path.join(tmpdir, f"fifos_{test_num}")
+    os.makedirs(fifo_dir, exist_ok=True)
 
-    # Выбираем бинарь интерактора — Linux или Windows
-    if os.name == "nt":
-        # На Windows ищем .exe рядом, если основной файл без расширения
-        interactor_exe = interactor_path
-        if not interactor_exe.endswith(".exe"):
-            candidate = interactor_path + ".exe"
-            if os.path.exists(candidate):
-                interactor_exe = candidate
+    fifo_sol_in  = os.path.join(fifo_dir, "sol_in")
+    fifo_sol_out = os.path.join(fifo_dir, "sol_out")
+
+    for f in (fifo_sol_in, fifo_sol_out):
+        if os.path.exists(f):
+            os.unlink(f)
+        os.mkfifo(f, 0o666)
+        os.chmod(f, 0o777)        # mkfifo режется umask, поэтому отдельный chmod
+    os.chmod(fifo_dir, 0o777)     # ← директория тоже!
+
+    subprocess.run(["isolate", "--box-id", str(box_id), "--cleanup"], capture_output=True)
+    init = subprocess.run(
+        ["isolate", "--box-id", str(box_id), "--init"],
+        capture_output=True, text=True
+    )
+    if init.returncode != 0:
+        return TestDetail(test_num, Verdict.RE, 0.0, 0.0)
+
+    box_dir = init.stdout.strip() + "/box"
+    meta_file = f"/tmp/isolate_meta_{box_id}.txt"
+    if os.path.exists(meta_file):
+        try:
+            os.unlink(meta_file)
+        except PermissionError:
+            subprocess.run(["rm", "-f", meta_file], capture_output=True)
+
+    is_python = solution_cmd[0].endswith("python3") or solution_cmd[0].endswith("python")
+    if is_python:
+        py_src = solution_cmd[1]
+        shutil.copy2(py_src, os.path.join(box_dir, "solution.py"))
+        inner_cmd = ["/usr/bin/python3", "-u", "solution.py"]
     else:
-        interactor_exe = interactor_path
+        exe = solution_cmd[0]
+        dst = os.path.join(box_dir, "solution")
+        shutil.copy2(exe, dst)
+        os.chmod(dst, 0o755)
+        inner_cmd = ["./solution"]
 
-    if not os.path.exists(interactor_exe):
-        return TestDetail(test_num, Verdict.RE, 0.0, 0.0)
+    isolate_cmd = [
+        "isolate",
+        "--box-id", str(box_id),
+        f"--time={time_limit}",
+        f"--wall-time={time_limit * 2}",
+        f"--mem={memory_limit * 1024}",
+        "--processes=10",
+        "--stack=65536",
+        f"--dir=/pipes={fifo_dir}:rw",
+        f"--meta={meta_file}",
+        "--stdin=/pipes/sol_in",
+        "--stdout=/pipes/sol_out",
+        "--stderr=/dev/null",
+    ]
+    # Динамические библиотеки нужны ВСЕГДА (и C++, и Python слинкованы динамически)
+    isolate_cmd += ["--dir=/lib", "--dir=/lib64", "--dir=/usr/lib"]
+    if is_python:
+        isolate_cmd += ["--dir=/usr", "--dir=/etc"]
+    isolate_cmd += ["--run", "--"] + inner_cmd
 
-    try:
-        # Запускаем интерактор: читает из in_file, пишет результат в interactor_output
-        proc_interactor = subprocess.Popen(
-            [interactor_exe, str(in_file), interactor_output],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        def _set_limits():
-            import resource
-            mem_bytes = memory_limit * 1024 * 1024
-            resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
-            resource.setrlimit(resource.RLIMIT_CPU, (int(time_limit) + 1, int(time_limit) + 2))
-
-        # Запускаем решение участника
-        proc_solution = subprocess.Popen(
-            solution_cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            preexec_fn=_set_limits if os.name != "nt" else None,
-        )
-    except OSError as e:
-        return TestDetail(test_num, Verdict.RE, 0.0, 0.0)
-
-    # Relay-потоки
-    relay_errors: list[str] = []
-
-    # solution.stdout → interactor.stdin
-    t_sol_to_int = threading.Thread(
-        target=_relay,
-        args=(proc_solution.stdout, proc_interactor.stdin, relay_errors),
-        daemon=True,
-    )
-    # interactor.stdout → solution.stdin
-    t_int_to_sol = threading.Thread(
-        target=_relay,
-        args=(proc_interactor.stdout, proc_solution.stdin, relay_errors),
-        daemon=True,
-    )
     start = time.perf_counter()
-    t_sol_to_int.start()
-    t_int_to_sol.start()
 
-    # Ждём завершения с таймаутом — проверяем каждые 50мс
-    wall_limit = time_limit + 1.0
+    proc_isolate = subprocess.Popen(
+        isolate_cmd,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+    )
+
+    # Оба конца открываем в O_RDWR.
+    # Почему именно так: открытие read-конца FIFO в режиме O_RDONLY|O_NONBLOCK
+    # создаёт гонку. Если родитель успевает открыть sol_out на чтение РАНЬШЕ,
+    # чем решение в box откроет свой конец на запись, возникает окно, в котором
+    # труба не имеет писателя, а полуоткрытые состояния sol_in/sol_out разъезжаются
+    # по таймингу — обе стороны блокируются не вовремя относительно первого обмена.
+    # Итог — недетерминированный дедлок (TLE на части прогонов, AC на других),
+    # зависящий от того, кто кого опередил на микросекунды.
+    #
+    # O_RDWR на FIFO по семантике ядра НИКОГДА не блокируется на open (труба
+    # сразу считается имеющей и читателя, и писателя) и не создаёт окна раннего
+    # EOF. В отличие от блокирующего O_WRONLY, не зависнет навсегда, если решение
+    # вообще не стартовало (например, бинарь не запустился) — родитель просто
+    # пойдёт дальше, isolate отработает по wall-таймауту, и мы получим корректный
+    # вердикт вместо вечного зависания.
+    try:
+        fd_read  = os.open(fifo_sol_out, os.O_RDWR)
+        fd_write = os.open(fifo_sol_in, os.O_RDWR)
+    except OSError as e:
+        _isolate_cleanup(box_id)
+        return TestDetail(test_num, Verdict.RE, 0.0, 0.0)
+
+    proc_interactor = subprocess.Popen(
+        [interactor_path, str(in_file), interactor_output],
+        stdin=fd_read,
+        stdout=fd_write,
+        stderr=subprocess.DEVNULL,
+        pass_fds=(fd_read, fd_write),
+    )
+
+    os.close(fd_read)
+    os.close(fd_write)
+
+    wall_limit = time_limit * 2
+    deadline = start + wall_limit
     timed_out = False
 
-    deadline = start + wall_limit
     while time.perf_counter() < deadline:
-        sol_done = proc_solution.poll() is not None
+        iso_done = proc_isolate.poll() is not None
         int_done = proc_interactor.poll() is not None
-        if sol_done and int_done:
+
+        if iso_done and int_done:
             break
-        time.sleep(0.05)
+        if iso_done and not int_done:
+            extra = time.perf_counter() + 0.5
+            while time.perf_counter() < extra:
+                if proc_interactor.poll() is not None:
+                    break
+                time.sleep(0.05)
+            if proc_interactor.poll() is None:
+                proc_interactor.kill()
+            break
+        if int_done and not iso_done:
+            extra = time.perf_counter() + 0.5
+            while time.perf_counter() < extra:
+                if proc_isolate.poll() is not None:
+                    break
+                time.sleep(0.05)
+            if proc_isolate.poll() is None:
+                _isolate_cleanup(box_id)   # ← вместо proc_isolate.kill()
+            break
     else:
         timed_out = True
-        _kill(proc_solution)
-        _kill(proc_interactor)
+        proc_interactor.kill()
+        # isolate убиваем правильно — через cleanup, он прибьёт процесс в box
+        _isolate_cleanup(box_id)
+
+    # Дожидаемся
+    try:
+        proc_isolate.wait(timeout=3)
+    except subprocess.TimeoutExpired:
+        _isolate_cleanup(box_id)
+        try:
+            proc_isolate.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            pass
+    try:
+        proc_interactor.wait(timeout=2)
+    except subprocess.TimeoutExpired:
+        proc_interactor.kill()
+
+    # ГАРАНТИРОВАННЫЙ cleanup в любом случае
+    _isolate_cleanup(box_id)
 
     elapsed = time.perf_counter() - start
 
-    # Принудительно закрываем stdout убитых процессов — это разблокирует
-    # relay-потоки которые висят на `for line in src`. Без этого потоки
-    # остаются живыми навсегда после kill (утечка потоков при каждом TLE).
-    _close(proc_solution.stdout)
-    _close(proc_interactor.stdout)
-    _close(proc_solution.stdin)
-    _close(proc_interactor.stdin)
+    meta = {}
+    if os.path.exists(meta_file):
+        with open(meta_file) as f:
+            for line in f:
+                if ":" in line:
+                    k, v = line.strip().split(":", 1)
+                    meta[k] = v
 
-    # Дожидаемся relay-потоков — теперь они гарантированно завершатся
-    # потому что src закрыт и for line in src вернёт StopIteration
-    t_sol_to_int.join(timeout=2.0)
-    t_int_to_sol.join(timeout=2.0)
+    subprocess.run(["isolate", "--box-id", str(box_id), "--cleanup"], capture_output=True)
+    for fp in (fifo_sol_in, fifo_sol_out):
+        try:
+            os.unlink(fp)
+        except OSError:
+            pass
 
-    if timed_out or elapsed > time_limit:
+    iso_status = meta.get("status", "")
+    iso_time = float(meta.get("time", elapsed))
+
+    if timed_out or iso_status == "TO":
         return TestDetail(test_num, Verdict.TLE, time_limit, 0.0)
+    if iso_status == "ML":
+        return TestDetail(test_num, Verdict.RE, iso_time, 0.0)
+    if iso_status in ("RE", "SG"):
+        return TestDetail(test_num, Verdict.RE, iso_time, 0.0)
+    if iso_status == "XX":
+        return TestDetail(test_num, Verdict.RE, iso_time, 0.0)
 
-    # RE решения участника
-    if proc_solution.returncode not in (0, None):
-        stderr_sol = b""
-        try:
-            stderr_sol = proc_solution.stderr.read(2048)
-        except Exception:
-            pass
-        error_msg = f"Solution RE (exit {proc_solution.returncode}): {stderr_sol.decode(errors='replace')[:500]}"
-        return TestDetail(test_num, Verdict.RE, elapsed, 0.0)
+    int_rc = proc_interactor.returncode
+    if int_rc is None:
+        return TestDetail(test_num, Verdict.RE, iso_time, 0.0)
+    if int_rc == 1 or int_rc == 2:
+        return TestDetail(test_num, Verdict.WA, iso_time, 0.0)
+    if int_rc in (3, 4):
+        return TestDetail(test_num, Verdict.RE, iso_time, 0.0)
+    if int_rc != 0 and int_rc != 7:
+        return TestDetail(test_num, Verdict.RE, iso_time, 0.0)
 
-    # Проверяем наличие output-файла интерактора
-    if not os.path.exists(interactor_output):
-        stderr_int = b""
-        try:
-            stderr_int = proc_interactor.stderr.read(1024)
-        except Exception:
-            pass
-        error_msg = f"Interactor RE (exit {proc_interactor.returncode}), no output file. Stderr: {stderr_int.decode(errors='replace')[:500]}"
-        return TestDetail(test_num, Verdict.RE, elapsed, 0.0)
+    if not checker_path or not os.path.exists(checker_path):
+        return TestDetail(test_num, Verdict.AC, iso_time, test_score)
 
-    # Для интерактивных задач эталонного ответа (.a/.ans/.out) нет —
-    # интерактор сам знает что правильно. Checker вызывается с
-    # interactor_output как ouf (результат участника) и как ans тоже,
-    # потому что большинство интерактивных checker'ов либо игнорируют ans,
-    # либо используют его только для сравнения с ouf.
-    # Поиск реального .a файла рядом с тестом (на случай если он есть).
-    ans_file = interactor_output  # дефолт: ouf == ans
+    ans_file = None
     for suffix in (".a", ".ans", ".out"):
-        candidate = str(in_file) + suffix if not in_file.suffix else str(in_file.with_suffix(suffix))
+        candidate = str(in_file.with_suffix(suffix)) if in_file.suffix else str(in_file) + suffix
         if os.path.exists(candidate):
             ans_file = candidate
             break
 
-    # Запускаем checker
-    score, verdict = _run_checker(
-        checker_path, in_file, interactor_output, ans_file, test_score
-    )
-    return TestDetail(test_num, verdict, elapsed, score)
+    if ans_file is None:
+        return TestDetail(test_num, Verdict.AC, iso_time, test_score)
+    if not os.path.exists(interactor_output) or os.path.getsize(interactor_output) == 0:
+        return TestDetail(test_num, Verdict.AC, iso_time, test_score)
 
-
-def _kill(proc: subprocess.Popen) -> None:
-    try:
-        proc.kill()
-    except Exception:
-        pass
-
-
-def _close(stream) -> None:
-    """Закрывает pipe-поток чтобы разблокировать relay-потоки висящие на чтении."""
-    try:
-        if stream and not stream.closed:
-            stream.close()
-    except Exception:
-        pass
-
-
-# ── Checker ───────────────────────────────────────────────────────────────────
-
-TESTLIB_POINTS = 7  # exit code для quitp() в testlib.h
-
-def _run_checker(
-    checker_path: str,
-    in_file: Path,
-    interactor_output: str,
-    answer_file: Path,
-    test_max: float,
-) -> tuple[float, Verdict]:
-    """
-    Запускает checker и возвращает (score, verdict).
-    Поддерживает как обычный OK/WA так и quitp (частичные баллы).
-    """
-    if not checker_path or not os.path.exists(checker_path):
-        # Нет чекера — сравниваем токенами
-        got = Path(interactor_output).read_text(encoding="utf-8", errors="replace").strip()
-        exp = answer_file.read_text(encoding="utf-8", errors="replace").strip()
-        if got.split() == exp.split():
-            return test_max, Verdict.AC
-        return 0.0, Verdict.WA
-
-    res = subprocess.run(
-        [checker_path, str(in_file), interactor_output, str(answer_file)],
+    checker_res = subprocess.run(
+        [checker_path, str(in_file), interactor_output, ans_file],
         capture_output=True, text=True,
     )
-    ouf_content = Path(interactor_output).read_text(encoding="utf-8", errors="replace").strip()
-    ans_content = Path(str(answer_file)).read_text(encoding="utf-8", errors="replace").strip()
-    if res.returncode == TESTLIB_POINTS:
-        # quitp — частичные баллы
-        import re
-        output = (res.stderr or res.stdout or "").strip()
-        m = re.search(r"points[_\s]+([\d.]+)", output)
-        if not m:
-            # Пробуем взять первый токен
-            try:
-                score = float(output.split()[0].replace(",", "."))
-            except (ValueError, IndexError):
-                score = 0.0
-        else:
-            score = float(m.group(1))
-
-        if test_max > 0 and score >= test_max - 1e-9:
-            return test_max, Verdict.AC
-        return score, Verdict.WA
-
-    if res.returncode == 0:
-        return test_max, Verdict.AC
-    if res.returncode in (1, 2):
-        return 0.0, Verdict.WA
-    return 0.0, Verdict.RE
+    if checker_res.returncode == 0:
+        return TestDetail(test_num, Verdict.AC, iso_time, test_score)
+    if checker_res.returncode in (1, 2):
+        return TestDetail(test_num, Verdict.WA, iso_time, 0.0)
+    return TestDetail(test_num, Verdict.RE, iso_time, 0.0)
 
 
-# ── Главная функция ───────────────────────────────────────────────────────────
+# ── Главная функция (как в interactive_judge, но с isolate) ──────────────────
 
-def judge_interactive(
+def judge_interactive_isolate(
     code: str,
     language: str,
     tests_path: str,
@@ -310,86 +284,49 @@ def judge_interactive(
     memory_limit: int,
     interactor_path: str,
     checker_path: str,
-    test_scores: list[float],   # балл за каждый тест (индекс = номер теста - 1)
+    test_scores: list[float],
+    box_id: int = 0,
 ) -> IOIResult:
-    """
-    Судья для интерактивных задач.
-
-    Совместим с ICPC (смотри только verdict) и IOI (смотри score по тестам).
-    """
     max_score = sum(test_scores) if test_scores else 0.0
-
     with tempfile.TemporaryDirectory() as tmpdir:
-        # Компиляция
         if language == "cpp":
             exe, compile_error = _compile_cpp(code, tmpdir)
             if compile_error:
-                return IOIResult(
-                    verdict=Verdict.CE,
-                    score=0.0,
-                    max_score=max_score,
-                    error_output=compile_error,
-                )
+                return IOIResult(verdict=Verdict.CE, score=0.0, max_score=max_score, error_output=compile_error)
             solution_cmd = [exe]
         elif language == "python":
             src = os.path.join(tmpdir, "solution.py")
             with open(src, "w", encoding="utf-8") as f:
                 f.write(code)
-            python_bin = "python" if os.name == "nt" else "python3"
-            solution_cmd = [python_bin, src]
+            solution_cmd = ["/usr/bin/python3", src]
         else:
-            return IOIResult(
-                verdict=Verdict.CE,
-                score=0.0,
-                max_score=max_score,
-                error_output=f"Язык не поддерживается: {language}",
-            )
+            return IOIResult(verdict=Verdict.CE, score=0.0, max_score=max_score, error_output=f"Не поддерживается: {language}")
 
-        # Находим тесты
         tests_dir = Path(tests_path)
-        if not tests_dir.exists():
-            return IOIResult(
-                verdict=Verdict.RE,
-                score=0.0,
-                max_score=max_score,
-                error_output=f"Папка тестов не найдена: {tests_path}",
-            )
-
-        # Поддерживаем оба формата: 01.in / 01 (без расширения)
         in_files = sorted(
             tests_dir.glob("*.in"),
             key=lambda p: int(p.stem) if p.stem.isdigit() else 0,
         )
         if not in_files:
-            # Попробуем файлы без расширения (MOSH/Polygon-стиль)
             in_files = sorted(
                 [f for f in tests_dir.iterdir() if f.is_file() and f.name.isdigit()],
                 key=lambda p: int(p.name),
             )
 
         if not in_files:
-            return IOIResult(
-                verdict=Verdict.RE,
-                score=0.0,
-                max_score=max_score,
-                error_output="Тесты не найдены",
-            )
+            return IOIResult(verdict=Verdict.RE, score=0.0, max_score=max_score, error_output="Тесты не найдены")
 
-        test_details: list[TestDetail] = []
+        test_details = []
         total_score = 0.0
         max_time = 0.0
-        first_error: str | None = None
+        first_error = None
         overall_verdict = Verdict.AC
 
         for in_file in in_files:
             test_num = int(in_file.stem) if in_file.stem.isdigit() else int(in_file.name)
-            test_score = (
-                test_scores[test_num - 1]
-                if 0 < test_num <= len(test_scores)
-                else 0.0
-            )
+            test_score = test_scores[test_num - 1] if 0 < test_num <= len(test_scores) else 0.0
 
-            detail = _run_interactive_test(
+            detail = _run_interactive_test_isolate(
                 solution_cmd=solution_cmd,
                 interactor_path=interactor_path,
                 in_file=in_file,
@@ -399,21 +336,21 @@ def judge_interactive(
                 tmpdir=tmpdir,
                 test_num=test_num,
                 test_score=test_score,
+                box_id=box_id,
             )
 
             test_details.append(detail)
             total_score += detail.score
             max_time = max(max_time, detail.execution_time or 0.0)
 
-            # Для ICPC — останавливаемся на первой ошибке
-            if detail.verdict not in (Verdict.AC,):
+            if detail.verdict != Verdict.AC:
                 if overall_verdict == Verdict.AC:
                     overall_verdict = detail.verdict
                     first_error = f"Тест {test_num}: {detail.verdict.value}"
+                break
 
         final_verdict = Verdict.AC if total_score >= max_score and max_score > 0 else overall_verdict
-
-        return IOIResult(
+        result = IOIResult(
             verdict=final_verdict,
             score=total_score,
             max_score=max_score,
@@ -421,3 +358,4 @@ def judge_interactive(
             error_output=first_error,
             execution_time=max_time if max_time > 0 else None,
         )
+        return result
