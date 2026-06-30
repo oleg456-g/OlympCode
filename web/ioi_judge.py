@@ -208,11 +208,11 @@ def _run_ioi_tests(
             test_details.append(TestDetail(test_num, Verdict.RE, elapsed, 0.0))
             continue
 
-        # Проверяем ответ
-        verdict = _check_answer(
-            in_file, proc.stdout, out_file, checker_path, tmpdir
+        verdict, frac = _check_answer(
+            in_file, proc.stdout, out_file, checker_path, tmpdir,
+            test_max=test_score   # ← передаём как есть, 0 так 0
         )
-        earned = test_score if verdict == Verdict.AC else 0.0
+        earned = test_score * frac
         test_details.append(TestDetail(test_num, verdict, elapsed, earned))
 
     # Считаем итоговый балл
@@ -272,7 +272,14 @@ def _run_ioi_tests(
     )
 
 
-def _check_answer(in_file, stdout, out_file, checker_path, tmpdir) -> Verdict:
+def _check_answer(in_file, stdout, out_file, checker_path, tmpdir, test_max=None) -> tuple[Verdict, float]:
+    """
+    Возвращает (verdict, earned_fraction).
+    earned_fraction — доля от максимума теста (0.0..1.0):
+      - обычный чекер (exit 0) → 1.0 (полный балл)
+      - quitp (exit 7) → points / test_max (частичный балл)
+      - WA (exit 1,2) → 0.0
+    """
     if checker_path and os.path.exists(checker_path):
         team_out = os.path.join(tmpdir, "team.out")
         with open(team_out, "w", encoding="utf-8") as f:
@@ -281,13 +288,36 @@ def _check_answer(in_file, stdout, out_file, checker_path, tmpdir) -> Verdict:
             [checker_path, str(in_file), team_out, str(out_file)],
             capture_output=True, text=True
         )
-        if res.returncode == 0:
-            return Verdict.AC
-        elif res.returncode in (1, 2):
-            return Verdict.WA
-        else:
-            return Verdict.RE
+        rc = res.returncode
+
+        if rc == 0:
+            return Verdict.AC, 1.0
+        if rc in (1, 2):
+            return Verdict.WA, 0.0
+        if rc == 7:
+            import re as _re
+            output = (res.stderr or "") + " " + (res.stdout or "")
+            m = _re.search(r"points\s+([\d.]+)", output)
+            earned_points = float(m.group(1)) if m else 0.0
+
+            if test_max and test_max > 0:
+                frac = earned_points / test_max
+                frac = max(0.0, min(1.0, frac))
+                if frac >= 1.0 - 1e-9:
+                    return Verdict.AC, 1.0
+                elif frac > 0:
+                    return Verdict.WA, frac   # частичный балл
+                else:
+                    return Verdict.WA, 0.0
+            else:
+                # test_max == 0 (sample-тест): quitp с любым баллом = тест пройден.
+                # Набрать 0 из 0 — это AC, не WA.
+                return Verdict.AC, 1.0
+        # Любой другой код — реальный RE чекера
+        return Verdict.RE, 0.0
     else:
         expected = out_file.read_text(encoding="utf-8").strip()
-        actual   = stdout.strip()
-        return Verdict.AC if actual.split() == expected.split() else Verdict.WA
+        actual = stdout.strip()
+        if actual.split() == expected.split():
+            return Verdict.AC, 1.0
+        return Verdict.WA, 0.0
