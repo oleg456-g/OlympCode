@@ -109,7 +109,7 @@ web/
 
 ```bash
 # 1. Клонировать репозиторий
-git clone https://github.com/<user>/OlympCode.git
+git clone https://github.com/oleg456-g/OlympCode.git
 cd OlympCode
 
 # 2. Виртуальное окружение и зависимости
